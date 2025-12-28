@@ -1,87 +1,101 @@
-import { Redirect, Route } from 'react-router-dom';
 import {
   IonApp,
-  IonIcon,
-  IonLabel,
   IonRouterOutlet,
+  IonTabs,
   IonTabBar,
   IonTabButton,
-  IonTabs,
-  setupIonicReact
-} from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Tab1';
-import Tab2 from './pages/Tab2';
-import Tab3 from './pages/Tab3';
+  IonIcon,
+  IonLabel,
+} from "@ionic/react";
+import { IonReactRouter } from "@ionic/react-router";
+import { Redirect, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-/* Core CSS required for Ionic components to work properly */
-import '@ionic/react/css/core.css';
+import { homeOutline, searchOutline, libraryOutline, personOutline } from "ionicons/icons";
 
-/* Basic CSS for apps built with Ionic */
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
+import HomeTab from "./pages/tabs/HomeTab";
+import ExploreTab from "./pages/tabs/ExploreTab";
+import LibraryTab from "./pages/tabs/LibraryTab";
+import ProfileTab from "./pages/tabs/ProfileTab";
+import Onboarding from "./pages/Onboarding";
+import BookDetail from "./pages/BookDetail";
 
-/* Optional CSS utils that can be commented out */
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
+import { getJSON } from "./services/storage";
+import type { UserPrefs } from "./models/UserPrefs";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+const PREFS_KEY = "user_prefs_v1";
 
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
+export default function App() {
+  const [ready, setReady] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
 
-/* Theme variables */
-import './theme/variables.css';
+  useEffect(() => {
+    (async () => {
+      const prefs = await getJSON<UserPrefs | null>(PREFS_KEY, null);
+      setOnboarded(!!prefs?.onboarded);
+      setReady(true);
+    })();
+  }, []);
 
-setupIonicReact();
+  if (!ready) return null;
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonTabs>
+  return (
+    <IonApp>
+      <IonReactRouter>
         <IonRouterOutlet>
-          <Route exact path="/tab1">
-            <Tab1 />
+          <Route path="/onboarding" exact>
+            <Onboarding onDone={() => setOnboarded(true)} />
           </Route>
-          <Route exact path="/tab2">
-            <Tab2 />
+
+          <Route path="/book/:id" exact>
+            <BookDetail />
           </Route>
-          <Route path="/tab3">
-            <Tab3 />
+
+          <Route path="/tabs">
+            {!onboarded ? (
+              <Redirect to="/onboarding" />
+            ) : (
+              <IonTabs>
+                <IonRouterOutlet>
+                  <Route path="/tabs/home" exact component={HomeTab} />
+                  <Route path="/tabs/explore" exact component={ExploreTab} />
+                  <Route path="/tabs/library" exact component={LibraryTab} />
+                  <Route path="/tabs/profile" exact component={ProfileTab} />
+                  <Route exact path="/tabs">
+                    <Redirect to="/tabs/home" />
+                  </Route>
+                </IonRouterOutlet>
+
+                <IonTabBar slot="bottom">
+                  <IonTabButton tab="home" href="/tabs/home">
+                    <IonIcon icon={homeOutline} />
+                    <IonLabel>Inicio</IonLabel>
+                  </IonTabButton>
+
+                  <IonTabButton tab="explore" href="/tabs/explore">
+                    <IonIcon icon={searchOutline} />
+                    <IonLabel>Explorar</IonLabel>
+                  </IonTabButton>
+
+                  <IonTabButton tab="library" href="/tabs/library">
+                    <IonIcon icon={libraryOutline} />
+                    <IonLabel>Mi lectura</IonLabel>
+                  </IonTabButton>
+
+                  <IonTabButton tab="profile" href="/tabs/profile">
+                    <IonIcon icon={personOutline} />
+                    <IonLabel>Perfil</IonLabel>
+                  </IonTabButton>
+                </IonTabBar>
+              </IonTabs>
+            )}
           </Route>
+
           <Route exact path="/">
-            <Redirect to="/tab1" />
+            <Redirect to="/tabs" />
           </Route>
         </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon aria-hidden="true" icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon aria-hidden="true" icon={square} />
-            <IonLabel>Tab 3</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
-  </IonApp>
-);
-
-export default App;
+      </IonReactRouter>
+    </IonApp>
+  );
+}
