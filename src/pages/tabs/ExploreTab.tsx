@@ -1,4 +1,4 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonSearchbar } from "@ionic/react";
+import { IonContent, IonHeader, IonList, IonPage, IonTitle, IonToolbar, IonSearchbar } from "@ionic/react";
 import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router";
 
@@ -13,10 +13,8 @@ export default function ExploreTab() {
   const tRef = useRef<number | null>(null);
 
   useEffect(() => {
-    (async () => {
-
-      setBooks([]);
-    })();
+    
+    setBooks([]);
   }, []);
 
   const onSearch = (value: string) => {
@@ -45,9 +43,11 @@ export default function ExploreTab() {
           placeholder="Buscar libros o autores..."
         />
 
-        {books.map((b) => (
-          <BookCard key={b.id} book={b} onClick={() => history.push(`/book/${b.id}`)} />
-        ))}
+        <IonList>
+          {books.map((b) => (
+            <BookCard key={b.id} book={b} onClick={() => history.push(`/book/${b.id}`)} />
+          ))}
+        </IonList>
       </IonContent>
     </IonPage>
   );
