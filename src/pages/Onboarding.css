@@ -1,0 +1,360 @@
+/* Variables de colores naranja */
+:root {
+  --orange-primary: #FF6B35;
+  --orange-secondary: #FF9E1F;
+  --orange-light: #FFB347;
+  --orange-lighter: #FFE8D6;
+  --orange-dark: #E55A2B;
+  --background-light: #FFF9F5;
+  --text-primary: #2D3748;
+  --text-secondary: #718096;
+  --border-color: #E2E8F0;
+  --success-color: #38A169;
+}
+
+.onboarding-content {
+  --background: var(--background-light);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Indicadores de pasos */
+.step-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem 1rem;
+}
+
+.step-indicator {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  color: var(--text-secondary);
+  border: 2px solid var(--border-color);
+  font-size: 1rem;
+}
+
+.step-indicator.active {
+  background: var(--orange-primary);
+  color: white;
+  border-color: var(--orange-primary);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.step-indicator.completed {
+  background: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+/* Contenedor del paso */
+.step-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+}
+
+/* Estilos generales de pasos */
+.step-content {
+  text-align: center;
+}
+
+.step-icon {
+  margin-bottom: 1.5rem;
+}
+
+.step-icon-img {
+  font-size: 4rem;
+  color: var(--orange-primary);
+  opacity: 0.9;
+}
+
+.step-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.step-description {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+/* Tarjetas de nivel */
+.options-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.level-card {
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: white;
+}
+
+.level-card.selected {
+  border-color: var(--orange-primary);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
+  transform: translateY(-2px);
+}
+
+.level-card h3 {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.level-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.check-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: var(--orange-primary);
+  font-size: 1.5rem;
+}
+
+/* Géneros */
+.genres-grid {
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.genre-chip {
+  padding: 1rem 0.75rem;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.genre-chip.selected {
+  background: var(--orange-lighter);
+  border-color: var(--orange-primary);
+  color: var(--orange-dark);
+}
+
+.genre-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.chip-check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: var(--orange-primary);
+  font-size: 1rem;
+}
+
+.selected-count {
+  margin-top: 1.5rem;
+  color: var(--orange-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Metas diarias */
+.goals-container {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.goal-card {
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 2px solid transparent;
+  background: white;
+}
+
+.goal-card.selected {
+  border-color: var(--orange-primary);
+  background: linear-gradient(135deg, #FFF9F5, #FFE8D6);
+}
+
+.goal-time {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--orange-primary);
+  margin-bottom: 0.25rem;
+}
+
+.goal-label {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.goal-check {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: var(--orange-primary);
+  font-size: 1.5rem;
+}
+
+.streak-motivation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--orange-lighter);
+  border-radius: 12px;
+  color: var(--orange-dark);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Idioma */
+.language-options {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.language-card {
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 2px solid transparent;
+  background: white;
+}
+
+.language-card.selected {
+  border-color: var(--orange-primary);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
+}
+
+.language-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.language-icon {
+  font-size: 1.75rem;
+}
+
+.language-card h3 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.language-description {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.language-check {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: var(--orange-primary);
+  font-size: 1.5rem;
+}
+
+/* Botones de navegación */
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border-color);
+}
+
+.back-button {
+  --color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.next-button {
+  --background: var(--orange-primary);
+  --background-hover: var(--orange-dark);
+  --background-activated: var(--orange-dark);
+  --border-radius: 50px;
+  font-weight: 600;
+  padding: 0 1.5rem;
+  height: 48px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.next-button:disabled {
+  --background: #CBD5E0;
+  box-shadow: none;
+}
+
+.step-counter {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Animaciones */
+.level-card, .goal-card, .language-card {
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .options-grid,
+  .goals-container,
+  .language-options {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .step-container {
+    padding: 2rem 2rem 3rem;
+  }
+  
+  .step-indicators {
+    padding: 3rem 1rem 1rem;
+  }
+}

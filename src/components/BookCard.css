@@ -1,0 +1,221 @@
+/* BookCard.css */
+.book-card {
+  margin: 0 0 16px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.book-card-content {
+  display: flex;
+  padding: 0;
+}
+
+.book-cover {
+  width: 120px;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  position: relative;
+  cursor: pointer;
+}
+
+.book-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-fallback {
+  text-align: center;
+}
+
+.book-initial {
+  font-size: 36px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.bestseller-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #fbbf24;
+  color: #78350f;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.book-info {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.book-main-info {
+  margin-bottom: 12px;
+}
+
+.book-title {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.book-author {
+  margin: 0 0 8px 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.book-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.book-genre {
+  background: #e0e7ff;
+  color: #4f46e5;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.book-pages, .book-rating {
+  color: #6b7280;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.book-rating ion-icon {
+  color: #fbbf24;
+  font-size: 14px;
+}
+
+.book-description {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+  margin: 8px 0 0 0;
+}
+
+.book-actions {
+  margin-top: auto;
+}
+
+.book-progress {
+  margin-bottom: 12px;
+}
+
+.book-progress-bar {
+  --progress-background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  height: 6px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.start-button {
+  --background: #4f46e5;
+  --background-hover: #4338ca;
+  --border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  height: 36px;
+  min-width: 90px;
+}
+
+.continue-button {
+  --background: #10b981;
+  --background-hover: #0da271;
+  --border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  height: 36px;
+  min-width: 90px;
+}
+
+.completed-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #10b981;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.completed-badge ion-icon {
+  font-size: 16px;
+}
+
+.secondary-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-button {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  min-height: 36px;
+}
+
+.icon-button ion-icon {
+  font-size: 20px;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .book-card-content {
+    flex-direction: column;
+  }
+  
+  .book-cover {
+    width: 100%;
+    min-height: 180px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .start-button,
+  .continue-button {
+    width: 100%;
+  }
+  
+  .secondary-actions {
+    justify-content: center;
+    width: 100%;
+  }
+}

@@ -1,0 +1,291 @@
+/* Onboarding.css - Versión Compacta */
+
+.onboarding-content {
+  --background: #f8fafc;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 24px;
+  --padding-bottom: 32px;
+}
+
+/* Header */
+.header-section {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.main-title {
+  color: #1a202c;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Tarjetas compactas */
+.preference-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.preference-card.compact {
+  margin-bottom: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px 0;
+}
+
+.step-indicator {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+ion-card-header {
+  padding: 0;
+}
+
+.card-title {
+  color: #2d3748;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+/* Racha compacta */
+.streak-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.streak-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.streak-icon-small {
+  color: #f56565;
+  font-size: 20px;
+}
+
+.small-toggle {
+  --handle-width: 20px;
+  --handle-height: 20px;
+  --background: #e2e8f0;
+  --background-checked: #f56565;
+  width: 44px;
+  height: 24px;
+}
+
+/* Segment compacto */
+.compact-segment {
+  background: #f7fafc;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.compact-segment::part(indicator) {
+  display: none;
+}
+
+.compact-segment ion-segment-button {
+  --background-checked: white;
+  --color-checked: #4f46e5;
+  --color: #718096;
+  border-radius: 8px;
+  min-height: 50px;
+  margin: 0 2px;
+}
+
+.segment-content-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+}
+
+.segment-content-compact ion-icon {
+  font-size: 20px;
+}
+
+.segment-content-compact ion-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Géneros en grid */
+.genres-grid {
+  padding: 4px 0;
+}
+
+.genre-chip-compact {
+  --background: #f1f5f9;
+  --color: #4a5568;
+  width: 100%;
+  justify-content: center;
+  padding: 8px 12px;
+  margin: 4px 0;
+  font-size: 0.85rem;
+  border-radius: 20px;
+  border: 2px solid transparent;
+}
+
+.genre-chip-compact.selected {
+  --background: var(--genre-color);
+  --color: white;
+  border-color: var(--genre-color);
+  font-weight: 500;
+}
+
+.genre-chip-compact ion-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+/* Meta diaria compacta */
+.goal-options-compact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.goal-option-compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.goal-option-compact.selected {
+  border-color: #4f46e5;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
+}
+
+.goal-circle {
+  width: 56px;
+  height: 56px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.goal-circle span {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.goal-circle small {
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+/* Idioma compacto */
+.language-options-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.language-option-compact {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.language-option-compact.selected {
+  border-color: #4f46e5;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
+}
+
+.language-flag {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.language-text {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+/* Botón */
+.action-section {
+  margin-top: 24px;
+  padding: 0 8px;
+}
+
+.start-button {
+  --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --background-hover: linear-gradient(135deg, #5a67d8 0%, #6d28d9 100%);
+  --border-radius: 12px;
+  --padding-top: 18px;
+  --padding-bottom: 18px;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.start-button ion-icon {
+  font-size: 20px;
+}
+
+/* Responsive */
+@media (max-width: 380px) {
+  .main-title {
+    font-size: 1.6rem;
+  }
+  
+  .goal-circle {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .goal-circle span {
+    font-size: 1rem;
+  }
+}
