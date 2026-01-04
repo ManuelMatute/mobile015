@@ -1,3 +1,4 @@
+// src/pages/tabs/LibraryTab.tsx
 import { IonButton } from "@ionic/react";
 import { useIonViewWillEnter } from "@ionic/react";
 import { useMemo, useState } from "react";
@@ -6,15 +7,16 @@ import { useHistory } from "react-router";
 import PageShell from "../../components/ui/PageShell";
 import type { Book } from "../../models/Book";
 import {
+  ensureProgressPagesFromLegacy,
   getFinished,
-  getProgress,
+  getProgressPages,
   getReadingNow,
   getToRead,
   markFinished,
   removeFromFinished,
   removeFromNow,
   removeFromToRead,
-  updateProgress,
+  updateProgressPages,
 } from "../../services/library";
 
 import "./LibraryTab.css";
@@ -48,41 +50,49 @@ function BookRow({
   );
 }
 
+function pageCountOf(b: Book) {
+  const p = b.pageCount;
+  return typeof p === "number" && p > 0 ? p : 0;
+}
+
 export default function LibraryTab() {
   const [now, setNowList] = useState<Book[]>([]);
   const [toRead, setToReadList] = useState<Book[]>([]);
   const [done, setDoneList] = useState<Book[]>([]);
-  const [progress, setProgressMap] = useState<Record<string, number>>({});
+  const [progressPages, setProgressPagesMap] = useState<Record<string, number>>({});
+
   const history = useHistory();
 
   const load = async () => {
-    const [n, t, d, p] = await Promise.all([
-      getReadingNow(),
-      getToRead(),
-      getFinished(),
-      getProgress(),
-    ]);
+    const [n, t, d] = await Promise.all([getReadingNow(), getToRead(), getFinished()]);
+
+    // ✅ migración 1 sola vez si aún no existe progress_pages
+    const allBooks = [...n, ...t, ...d];
+    await ensureProgressPagesFromLegacy(allBooks);
+
+    const p = await getProgressPages();
+
     setNowList(n);
     setToReadList(t);
     setDoneList(d);
-    setProgressMap(p);
+    setProgressPagesMap(p);
   };
 
   useIonViewWillEnter(() => {
     load();
   });
 
-  const progFor = useMemo(() => {
-    return (id: string) => progress[id] ?? 0;
-  }, [progress]);
+  const pagesReadFor = useMemo(() => {
+    return (id: string) => progressPages[id] ?? 0;
+  }, [progressPages]);
 
   const onOpen = (id: string) => {
     history.push(`/book/${id}`);
   };
 
-  const onIncProgress = async (bookId: string, delta: number) => {
-    const cur = progress[bookId] ?? 0;
-    await updateProgress(bookId, cur + delta);
+  const onIncPages = async (book: Book, deltaPages: number) => {
+    const total = pageCountOf(book);
+    await updateProgressPages(book.id, deltaPages, total > 0 ? total : undefined);
     await load();
   };
 
@@ -119,22 +129,71 @@ export default function LibraryTab() {
           ) : (
             <div className="lib-list">
               {now.map((b) => {
-                const p = progFor(b.id);
+                const readPages = pagesReadFor(b.id);
+                const totalPages = pageCountOf(b);
+
+                const pct =
+                  totalPages > 0
+                    ? Math.max(0, Math.min(100, Math.round((readPages / totalPages) * 100)))
+                    : 0;
+
+                const rightBadge =
+                  totalPages > 0 ? (
+                    <div className="lib-badge">
+                      {readPages}/{totalPages}
+                    </div>
+                  ) : (
+                    <div className="lib-badge">{readPages} págs</div>
+                  );
 
                 return (
                   <div key={b.id} style={{ marginTop: 10 }}>
-                    <BookRow
-                      book={b}
-                      onClick={() => onOpen(b.id)}
-                      right={<div className="lib-badge">{p}%</div>}
-                    />
+                    <BookRow book={b} onClick={() => onOpen(b.id)} right={rightBadge} />
 
+                    {/* Texto: Página X de Y */}
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      {totalPages > 0 ? `Página ${readPages} de ${totalPages}` : `Páginas leídas: ${readPages}`}
+                      {totalPages > 0 ? ` (${pct}%)` : ""}
+                    </div>
+
+                    {/* Barra de progreso */}
+                    {totalPages > 0 && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          width: "100%",
+                          height: 8,
+                          borderRadius: 999,
+                          background: "rgba(0,0,0,0.08)",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${pct}%`,
+                            borderRadius: 999,
+                            background: "var(--ion-color-primary)",
+                            transition: "width 200ms ease",
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Botones: ahora son páginas */}
                     <div className="lib-actions">
-                      <IonButton className="app-secondary-button" onClick={() => onIncProgress(b.id, 10)}>
-                        +10%
+                      <IonButton className="app-secondary-button" onClick={() => onIncPages(b, 10)}>
+                        +10 págs
                       </IonButton>
-                      <IonButton className="app-secondary-button" onClick={() => onIncProgress(b.id, -10)}>
-                        -10%
+                      <IonButton className="app-secondary-button" onClick={() => onIncPages(b, -10)}>
+                        -10 págs
                       </IonButton>
                     </div>
 

@@ -1,12 +1,18 @@
+// src/services/library.ts
 import type { Book } from "../models/Book";
 import { getJSON, setJSON } from "./storage";
 
 const KEY_NOW = "reading_now_v1"; // ahora será Book[] (compatible con el formato viejo)
 const KEY_TO_READ = "to_read_v1";
 const KEY_DONE = "finished_v1";
-const KEY_PROGRESS = "reading_progress_v1";
 
-type ProgressMap = Record<string, number>;
+// ✅ LEGACY (antes guardaba %)
+const KEY_PROGRESS_LEGACY_PERCENT = "reading_progress_v1";
+
+// ✅ NUEVO (ahora guardamos páginas leídas)
+const KEY_PROGRESS_PAGES = "reading_progress_pages_v1";
+
+type ProgressMap = Record<string, number>; // ahora lo usamos como "pagesRead"
 
 function uniqById(list: Book[]) {
   const m = new Map<string, Book>();
@@ -16,6 +22,16 @@ function uniqById(list: Book[]) {
 
 function withoutId(list: Book[], id: string) {
   return list.filter((b) => b.id !== id);
+}
+
+function clampInt(n: number, min: number, max: number) {
+  const v = Math.round(Number.isFinite(n) ? n : 0);
+  return Math.max(min, Math.min(max, v));
+}
+
+function pageCountOf(book?: Book | null) {
+  const p = book?.pageCount;
+  return typeof p === "number" && p > 0 ? p : 0;
 }
 
 // ✅ MIGRACIÓN: soporta viejo (Book) y nuevo (Book[])
@@ -61,21 +77,92 @@ export async function setFinished(list: Book[]) {
   await setJSON(KEY_DONE, uniqById(list));
 }
 
-export async function getProgress(): Promise<ProgressMap> {
-  return getJSON<ProgressMap>(KEY_PROGRESS, {});
+/**
+ * ✅ NUEVO: leer progreso en páginas
+ */
+export async function getProgressPages(): Promise<ProgressMap> {
+  return getJSON<ProgressMap>(KEY_PROGRESS_PAGES, {});
 }
 
-export async function setProgress(map: ProgressMap) {
-  await setJSON(KEY_PROGRESS, map);
+export async function setProgressPages(map: ProgressMap) {
+  await setJSON(KEY_PROGRESS_PAGES, map);
+}
+
+/**
+ * ✅ LEGACY: leer progreso viejo (porcentaje)
+ */
+async function getProgressLegacyPercent(): Promise<Record<string, number>> {
+  return getJSON<Record<string, number>>(KEY_PROGRESS_LEGACY_PERCENT, {});
+}
+
+/**
+ * ✅ MIGRACIÓN AUTOMÁTICA:
+ * Si no existe reading_progress_pages_v1, intentamos convertir desde porcentaje (reading_progress_v1)
+ * usando pageCount de los libros disponibles.
+ */
+export async function ensureProgressPagesFromLegacy(allBooks: Book[]): Promise<ProgressMap> {
+  const pages = await getProgressPages();
+
+  // si ya existe algo, no tocamos
+  if (pages && Object.keys(pages).length > 0) return pages;
+
+  const legacy = await getProgressLegacyPercent();
+  if (!legacy || Object.keys(legacy).length === 0) return pages;
+
+  const byId = new Map<string, Book>();
+  for (const b of allBooks) byId.set(b.id, b);
+
+  const migrated: ProgressMap = {};
+
+  for (const [id, percentRaw] of Object.entries(legacy)) {
+    const book = byId.get(id);
+    const total = pageCountOf(book);
+
+    // si no tengo pageCount, no puedo convertir bien -> lo dejo en 0 (o lo ignoras)
+    if (total <= 0) {
+      migrated[id] = 0;
+      continue;
+    }
+
+    const percent = clampInt(percentRaw, 0, 100);
+    migrated[id] = clampInt((percent / 100) * total, 0, total);
+  }
+
+  await setProgressPages(migrated);
+  return migrated;
+}
+
+/**
+ * ✅ Actualiza páginas leídas sumando delta.
+ * Si pasas totalPages, hace clamp a [0..totalPages].
+ */
+export async function updateProgressPages(bookId: string, deltaPages: number, totalPages?: number) {
+  const progress = await getProgressPages();
+  const cur = progress[bookId] ?? 0;
+
+  const max = typeof totalPages === "number" && totalPages > 0 ? totalPages : Number.MAX_SAFE_INTEGER;
+  const nextVal = clampInt(cur + deltaPages, 0, max);
+
+  await setProgressPages({ ...progress, [bookId]: nextVal });
+}
+
+/**
+ * ✅ Set exacto de páginas leídas (por si luego quieres slider/input)
+ */
+export async function setProgressPagesExact(bookId: string, pagesRead: number, totalPages?: number) {
+  const progress = await getProgressPages();
+  const max = typeof totalPages === "number" && totalPages > 0 ? totalPages : Number.MAX_SAFE_INTEGER;
+  const nextVal = clampInt(pagesRead, 0, max);
+  await setProgressPages({ ...progress, [bookId]: nextVal });
 }
 
 // ✅ ahora "empezar a leer" agrega el libro al array de leyendo
 export async function startReading(book: Book) {
-  const [now, toRead, done, progress] = await Promise.all([
+  const [now, toRead, done, progressPages] = await Promise.all([
     getReadingNow(),
     getToRead(),
     getFinished(),
-    getProgress(),
+    getProgressPages(),
   ]);
 
   const nextNow = uniqById([book, ...withoutId(now, book.id)]);
@@ -84,18 +171,14 @@ export async function startReading(book: Book) {
   await setToRead(withoutId(toRead, book.id));
   await setFinished(withoutId(done, book.id));
 
-  if (progress[book.id] == null) {
-    const next = { ...progress, [book.id]: 0 };
-    await setProgress(next);
+  // si no existe registro, lo creamos en 0 páginas
+  if (progressPages[book.id] == null) {
+    await setProgressPages({ ...progressPages, [book.id]: 0 });
   }
 }
 
 export async function addToRead(book: Book) {
-  const [now, toRead, done] = await Promise.all([
-    getReadingNow(),
-    getToRead(),
-    getFinished(),
-  ]);
+  const [now, toRead, done] = await Promise.all([getReadingNow(), getToRead(), getFinished()]);
 
   // si lo mandas a "por leer", lo sacamos de "leyendo" también
   await setReadingNow(withoutId(now, book.id));
@@ -106,11 +189,11 @@ export async function addToRead(book: Book) {
 }
 
 export async function markFinished(book: Book) {
-  const [now, toRead, done, progress] = await Promise.all([
+  const [now, toRead, done, progressPages] = await Promise.all([
     getReadingNow(),
     getToRead(),
     getFinished(),
-    getProgress(),
+    getProgressPages(),
   ]);
 
   // sacarlo de leyendo
@@ -123,9 +206,14 @@ export async function markFinished(book: Book) {
   // sacarlo de por leer
   await setToRead(withoutId(toRead, book.id));
 
-  // progreso al 100%
-  const nextProgress = { ...progress, [book.id]: 100 };
-  await setProgress(nextProgress);
+  // ✅ progreso = totalPages si existe, si no 0 (no podemos inventar)
+  const total = pageCountOf(book);
+  const nextProgress = { ...progressPages, [book.id]: total > 0 ? total : (progressPages[book.id] ?? 0) };
+  await setProgressPages(nextProgress);
+
+  // (opcional) si quieres mantener legacy en 100% para compat vieja:
+  // const legacy = await getProgressLegacyPercent();
+  // await setJSON(KEY_PROGRESS_LEGACY_PERCENT, { ...legacy, [book.id]: 100 });
 }
 
 export async function removeFromNow(id: string) {
@@ -141,10 +229,4 @@ export async function removeFromToRead(id: string) {
 export async function removeFromFinished(id: string) {
   const done = await getFinished();
   await setFinished(withoutId(done, id));
-}
-
-export async function updateProgress(bookId: string, value: number) {
-  const progress = await getProgress();
-  const v = Math.max(0, Math.min(100, Math.round(value)));
-  await setProgress({ ...progress, [bookId]: v });
 }

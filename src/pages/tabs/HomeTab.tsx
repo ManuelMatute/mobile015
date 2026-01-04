@@ -20,7 +20,8 @@ import { getJSON, setJSON } from "../../services/storage";
 import type { Book } from "../../models/Book";
 import type { UserPrefs } from "../../models/UserPrefs";
 
-import { getReadingNow, getProgress } from "../../services/library";
+// ✅ CAMBIO: usamos progreso por páginas
+import { getReadingNow, getProgressPages, ensureProgressPagesFromLegacy } from "../../services/library";
 
 const PREFS_KEY = "user_prefs_v1";
 
@@ -55,6 +56,11 @@ function prefsSignature(prefs: UserPrefs | null) {
   return JSON.stringify({ level, dailyMinutesGoal, genres });
 }
 
+function pageCountOf(b?: Book | null) {
+  const p = b?.pageCount;
+  return typeof p === "number" && p > 0 ? p : 0;
+}
+
 export default function HomeTab() {
   const [streak, setStreak] = useState(0);
 
@@ -64,7 +70,8 @@ export default function HomeTab() {
   const [recMsg, setRecMsg] = useState("");
 
   const [readingNow, setReadingNow] = useState<Book[]>([]);
-  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  // ✅ pages map
+  const [pagesMap, setPagesMap] = useState<Record<string, number>>({});
 
   const [refreshUsed, setRefreshUsed] = useState(0);
 
@@ -94,7 +101,7 @@ export default function HomeTab() {
       await setJSON(REC_REFRESH_KEY, next);
       setRefreshUsed(0);
 
-      // Opcional pero recomendado: si cambian prefs, limpia cache para que cargue acorde a lo nuevo
+      // si cambian prefs, limpia cache para que cargue acorde a lo nuevo
       if (!st || st.prefsSig !== sig) {
         await setJSON(RECS_CACHE_KEY, null);
       }
@@ -108,9 +115,16 @@ export default function HomeTab() {
     const s = await getStreak();
     setStreak(s.streakCount);
 
-    const [nowList, pMap] = await Promise.all([getReadingNow(), getProgress()]);
+    // ✅ reading now + pages
+    const nowList = await getReadingNow();
+
+    // ✅ migrar legacy % -> pages si hiciera falta (solo una vez)
+    await ensureProgressPagesFromLegacy(nowList);
+
+    const pMap = await getProgressPages();
+
     setReadingNow(nowList);
-    setProgressMap(pMap ?? {});
+    setPagesMap(pMap ?? {});
   };
 
   const loadRecsFromCacheOrFetch = async () => {
@@ -125,7 +139,12 @@ export default function HomeTab() {
 
       // 1) Intentar usar cache (si coincide firma)
       const cache = await getJSON<RecsCache | null>(RECS_CACHE_KEY, null);
-      if (cache && cache.prefsSig === sig && Array.isArray(cache.books) && cache.books.length > 0) {
+      if (
+        cache &&
+        cache.prefsSig === sig &&
+        Array.isArray(cache.books) &&
+        cache.books.length > 0
+      ) {
         setBooks(cache.books);
         return;
       }
@@ -165,15 +184,18 @@ export default function HomeTab() {
   const openExplore = () => history.push("/tabs/explore");
   const openLibrary = () => history.push("/tabs/library");
 
+  // ✅ completado si pagesRead >= pageCount (si pageCount existe)
   const completedCount = useMemo(() => {
-    return readingNow.filter((b) => (progressMap[b.id] ?? 0) >= 100).length;
-  }, [readingNow, progressMap]);
+    return readingNow.filter((b) => {
+      const total = pageCountOf(b);
+      if (total <= 0) return false;
+      const read = Math.max(0, pagesMap[b.id] ?? 0);
+      return read >= total;
+    }).length;
+  }, [readingNow, pagesMap]);
 
   const MAX_WIDGET_BOOKS = 2;
-  const widgetBooks = useMemo(
-    () => readingNow.slice(0, MAX_WIDGET_BOOKS),
-    [readingNow]
-  );
+  const widgetBooks = useMemo(() => readingNow.slice(0, MAX_WIDGET_BOOKS), [readingNow]);
   const hasMoreThanWidget = readingNow.length > MAX_WIDGET_BOOKS;
 
   const canRefresh = refreshUsed < MAX_REFRESHES_PER_DAY;
@@ -285,7 +307,16 @@ export default function HomeTab() {
                   <>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
                       {widgetBooks.map((b) => {
-                        const p = Math.max(0, Math.min(100, progressMap[b.id] ?? 0));
+                        const total = pageCountOf(b);
+                        const read = Math.max(0, pagesMap[b.id] ?? 0);
+
+                        const pct =
+                          total > 0
+                            ? Math.max(0, Math.min(100, Math.round((read / total) * 100)))
+                            : 0;
+
+                        const progressLabel =
+                          total > 0 ? `Página ${Math.min(read, total)} de ${total}` : `Páginas leídas: ${read}`;
 
                         return (
                           <div
@@ -364,8 +395,8 @@ export default function HomeTab() {
                                       marginBottom: 6,
                                     }}
                                   >
-                                    <span>Progreso</span>
-                                    <span>{Math.round(p)}%</span>
+                                    <span>{progressLabel}</span>
+                                    <span>{total > 0 ? `${pct}%` : ""}</span>
                                   </div>
 
                                   <div
@@ -379,7 +410,7 @@ export default function HomeTab() {
                                   >
                                     <div
                                       style={{
-                                        width: `${p}%`,
+                                        width: `${pct}%`,
                                         height: "100%",
                                         borderRadius: 999,
                                         background: "var(--orange)",
