@@ -23,6 +23,8 @@ import BookDetail from "./pages/BookDetail";
 import { getJSON } from "./services/storage";
 import type { UserPrefs } from "./models/UserPrefs";
 
+import "./theme/appTheme.css";
+
 const PREFS_KEY = "user_prefs_v1";
 
 export default function App() {
@@ -66,25 +68,33 @@ export default function App() {
                   </Route>
                 </IonRouterOutlet>
 
-                <IonTabBar slot="bottom">
-                  <IonTabButton tab="home" href="/tabs/home">
-                    <IonIcon icon={homeOutline} />
-                    <IonLabel>Inicio</IonLabel>
+                <IonTabBar slot="bottom" className="tab-bar">
+                  <IonTabButton tab="home" href="/tabs/home" className="tab-button">
+                    <span className="tab-icon">
+                      <IonIcon icon={homeOutline} />
+                    </span>
+                    <IonLabel className="tab-label">Inicio</IonLabel>
                   </IonTabButton>
 
-                  <IonTabButton tab="explore" href="/tabs/explore">
-                    <IonIcon icon={searchOutline} />
-                    <IonLabel>Explorar</IonLabel>
+                  <IonTabButton tab="explore" href="/tabs/explore" className="tab-button">
+                    <span className="tab-icon">
+                      <IonIcon icon={searchOutline} />
+                    </span>
+                    <IonLabel className="tab-label">Explorar</IonLabel>
                   </IonTabButton>
 
-                  <IonTabButton tab="library" href="/tabs/library">
-                    <IonIcon icon={libraryOutline} />
-                    <IonLabel>Mi lectura</IonLabel>
+                  <IonTabButton tab="library" href="/tabs/library" className="tab-button">
+                    <span className="tab-icon">
+                      <IonIcon icon={libraryOutline} />
+                    </span>
+                    <IonLabel className="tab-label">Mi lectura</IonLabel>
                   </IonTabButton>
 
-                  <IonTabButton tab="profile" href="/tabs/profile">
-                    <IonIcon icon={personOutline} />
-                    <IonLabel>Perfil</IonLabel>
+                  <IonTabButton tab="profile" href="/tabs/profile" className="tab-button">
+                    <span className="tab-icon">
+                      <IonIcon icon={personOutline} />
+                    </span>
+                    <IonLabel className="tab-label">Perfil</IonLabel>
                   </IonTabButton>
                 </IonTabBar>
               </IonTabs>

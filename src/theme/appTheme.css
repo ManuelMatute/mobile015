@@ -1,0 +1,236 @@
+:root {
+  --orange-primary: #FF6B35;
+  --orange-secondary: #FF9E1F;
+  --orange-light: #FFB347;
+  --orange-lighter: #FFE8D6;
+  --orange-dark: #E55A2B;
+  --background-light: #FFF9F5;
+  --text-primary: #2D3748;
+  --text-secondary: #718096;
+  --border-color: #E2E8F0;
+  --success-color: #38A169;
+
+  --app-radius-lg: 16px;
+  --app-radius-md: 12px;
+  --app-shadow: 0 8px 25px rgba(255, 107, 53, 0.10);
+  --app-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.app-content {
+  --background: var(--background-light);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.app-page {
+  background: var(--background-light);
+}
+
+.app-header ion-toolbar {
+  --background: var(--background-light);
+  --border-color: transparent;
+}
+
+.app-header ion-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.app-container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px 16px 28px;
+}
+
+.app-section {
+  margin-top: 16px;
+}
+
+.app-section-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 18px 0 12px;
+}
+
+.app-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.app-card {
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.app-card.selected {
+  border-color: var(--orange-primary);
+  box-shadow: var(--app-shadow);
+}
+
+.app-primary-button {
+  --background: var(--orange-primary);
+  --background-hover: var(--orange-dark);
+  --background-activated: var(--orange-dark);
+  --border-radius: 50px;
+  font-weight: 700;
+  height: 48px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.28);
+}
+
+.app-primary-button.button-disabled {
+  --background: #CBD5E0;
+  box-shadow: none;
+}
+
+.app-secondary-button {
+  --background: #fff;
+  --color: var(--text-primary);
+  --border-radius: 50px;
+  font-weight: 700;
+  height: 48px;
+  border: 2px solid var(--border-color);
+}
+
+.app-muted-button {
+  --color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.app-chip {
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 2px solid var(--border-color);
+  box-shadow: var(--app-shadow-soft);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.app-chip ion-icon {
+  color: var(--orange-primary);
+}
+
+.app-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 18px 0;
+}
+
+.app-searchbar {
+  --background: #fff;
+  --border-radius: 14px;
+  --box-shadow: var(--app-shadow-soft);
+  --placeholder-color: var(--text-secondary);
+  --color: var(--text-primary);
+  --icon-color: var(--orange-primary);
+  padding: 0 16px;
+}
+
+.app-list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.tab-bar {
+  --background: white;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+  height: 64px;
+}
+
+.tab-bar a,
+.tab-bar a:visited,
+.tab-bar a:hover,
+.tab-bar a:active {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tab-button {
+  --color: #9ca3af;
+  --color-selected: #f97316;
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.tab-button::part(native) {
+  height: 64px;
+  padding-top: 14px;
+  padding-bottom: 8px;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+}
+
+.tab-button.tab-selected::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 4px;
+  background: linear-gradient(to right, #fb923c, #f97316);
+  border-radius: 0 0 999px 999px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tab-icon {
+  padding: 9px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.tab-icon ion-icon {
+  font-size: 22px;
+}
+
+.tab-button.tab-selected .tab-icon {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.tab-button:not(.tab-selected) .tab-icon {
+  color: #9ca3af;
+}
+
+.tab-button:not(.tab-selected):hover .tab-icon {
+  color: #fb923c;
+  background: rgba(255, 247, 237, 0.5);
+}
+
+.tab-label {
+  font-size: 11px;
+  font-weight: 700;
+  transition: color 0.2s;
+  margin-top: 2px;
+  line-height: 1.05;
+  max-width: 72px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.tab-button.tab-selected .tab-label {
+  color: #f97316;
+}
+
+.tab-button:not(.tab-selected) .tab-label {
+  color: #6b7280;
+}
+
+.tab-button:not(.tab-selected):hover .tab-label {
+  color: #fb923c;
+}

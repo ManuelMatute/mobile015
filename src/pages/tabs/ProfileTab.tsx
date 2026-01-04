@@ -1,5 +1,6 @@
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/react";
+import { IonButton } from "@ionic/react";
 import { useState } from "react";
+import PageShell from "../../components/ui/PageShell";
 import { removeKey } from "../../services/storage";
 import { resetStreak } from "../../services/streak";
 
@@ -8,7 +9,7 @@ export default function ProfileTab() {
 
   const redoOnboarding = async () => {
     await removeKey("user_prefs_v1");
-    setMsg("Onboarding reiniciado. Recarga la app (o vuelve a /onboarding).");
+    setMsg("Onboarding reiniciado. Recarga la app o entra a /onboarding.");
   };
 
   const reset = async () => {
@@ -17,24 +18,30 @@ export default function ProfileTab() {
   };
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Perfil</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <PageShell title="Perfil">
+      <div className="app-section">
+        <div className="app-card" style={{ padding: 16 }}>
+          <p className="app-subtitle" style={{ marginBottom: 12 }}>
+            Ajustes rápidos
+          </p>
 
-      <IonContent className="ion-padding">
-        <IonButton expand="block" color="medium" onClick={reset}>
-          Resetear racha
-        </IonButton>
+          <IonButton expand="block" className="app-secondary-button" onClick={reset}>
+            Resetear racha
+          </IonButton>
 
-        <IonButton expand="block" color="danger" onClick={redoOnboarding} style={{ marginTop: 10 }}>
-          Rehacer onboarding
-        </IonButton>
+          <div style={{ height: 10 }} />
 
-        {msg && <p style={{ marginTop: 16 }}>{msg}</p>}
-      </IonContent>
-    </IonPage>
+          <IonButton expand="block" className="app-primary-button" onClick={redoOnboarding}>
+            Rehacer onboarding
+          </IonButton>
+
+          {msg && (
+            <p className="app-subtitle" style={{ marginTop: 14 }}>
+              {msg}
+            </p>
+          )}
+        </div>
+      </div>
+    </PageShell>
   );
 }
