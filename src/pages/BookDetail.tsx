@@ -1,4 +1,12 @@
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/react";
+// BookDetail.tsx
+import {
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+} from "@ionic/react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router";
 import type { Book } from "../models/Book";
@@ -21,24 +29,30 @@ function uniqStrings(list: (string | undefined | null)[]) {
   return Array.from(new Set(clean));
 }
 
+// ✅ Merge explícito por campo (base manda si tiene algo, si no se rellena con incoming)
 function mergeBooks(base: Book, incoming: Book): Book {
-  // Regla: mantener lo que ya venía del Home/Explore si existe,
-  // y “rellenar” con Work API si hace falta.
-  const mergedCategories = uniqStrings([...(base.categories ?? []), ...(incoming.categories ?? [])]).slice(
-    0,
-    TAGS_MAX_IN_DETAIL
-  );
+  const mergedCategories = uniqStrings([
+    ...(base.categories ?? []),
+    ...(incoming.categories ?? []),
+  ]).slice(0, TAGS_MAX_IN_DETAIL);
 
   return {
-    ...incoming, // trae lo “nuevo”
-    ...base,     // pero base manda en lo que ya tenía (para consistencia visual)
-    // Campos que sí conviene mergear:
-    authors: (base.authors && base.authors.length > 0) ? base.authors : incoming.authors,
+    id: base.id || incoming.id,
+    title: base.title || incoming.title,
+
+    authors: base.authors && base.authors.length ? base.authors : incoming.authors,
     description: base.description ?? incoming.description,
+
     pageCount: typeof base.pageCount === "number" ? base.pageCount : incoming.pageCount,
     language: base.language ?? incoming.language,
+
     thumbnail: base.thumbnail ?? incoming.thumbnail,
-    categories: mergedCategories.length > 0 ? mergedCategories : (base.categories ?? incoming.categories),
+    previewLink: base.previewLink ?? incoming.previewLink,
+    publishedDate: base.publishedDate ?? incoming.publishedDate,
+
+    categories: mergedCategories.length
+      ? mergedCategories
+      : base.categories ?? incoming.categories,
   };
 }
 
@@ -86,7 +100,6 @@ export default function BookDetail() {
       setError("");
       setShowAllTags(false);
 
-      // Si no vino book por state, sí mostramos loading fuerte
       if (!initialBook) setLoading(true);
 
       try {
@@ -100,15 +113,15 @@ export default function BookDetail() {
         setPrefs(p);
 
         if (!bWork) {
-          // Si no hay Work, nos quedamos con initialBook si existía.
           if (!initialBook) {
             setBook(null);
-            setError("No se pudo cargar este libro (OpenLibrary no devolvió datos para este ID).");
+            setError(
+              "No se pudo cargar este libro (OpenLibrary no devolvió datos para este ID)."
+            );
           }
           return;
         }
 
-        // ✅ 2) Si ya había book (Home/Explore), mezclamos.
         if (initialBook) {
           setBook(mergeBooks(initialBook, bWork));
         } else {
@@ -116,10 +129,11 @@ export default function BookDetail() {
         }
       } catch (e) {
         if (!mounted) return;
-        // Si no había initialBook, mostramos error. Si sí había, lo dejamos usable.
         if (!initialBook) {
           setBook(null);
-          setError("Ocurrió un error cargando el libro. Revisa la consola (Network) para ver el detalle.");
+          setError(
+            "Ocurrió un error cargando el libro. Revisa la consola (Network) para ver el detalle."
+          );
         }
       } finally {
         if (mounted) setLoading(false);
@@ -129,7 +143,6 @@ export default function BookDetail() {
     return () => {
       mounted = false;
     };
-    // importante: initialBook no en deps para no re-ejecutar por objeto
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -137,7 +150,10 @@ export default function BookDetail() {
   const hasCats = cats.length > 0;
 
   const pagesPerHour = useMemo(() => pagesPerHourFromPrefs(prefs), [prefs]);
-  const hours = useMemo(() => estimateHours(book?.pageCount, pagesPerHour), [book?.pageCount, pagesPerHour]);
+  const hours = useMemo(
+    () => estimateHours(book?.pageCount, pagesPerHour),
+    [book?.pageCount, pagesPerHour]
+  );
 
   const days = useMemo(() => {
     const mins = prefs?.dailyMinutesGoal;
@@ -180,7 +196,13 @@ export default function BookDetail() {
         <IonContent className="app-content">
           <div className="app-container">
             <div className="app-card" style={{ padding: 16 }}>
-              <div style={{ fontWeight: 900, color: "var(--text-primary)", marginBottom: 8 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  color: "var(--text-primary)",
+                  marginBottom: 8,
+                }}
+              >
                 No disponible
               </div>
               <div className="app-subtitle" style={{ margin: 0, fontWeight: 700 }}>
@@ -280,7 +302,14 @@ export default function BookDetail() {
           )}
 
           <div className="app-card" style={{ padding: 16 }}>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 800, marginBottom: 10 }}>
+            <div
+              style={{
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                fontWeight: 800,
+                marginBottom: 10,
+              }}
+            >
               Detalles
             </div>
 
@@ -301,7 +330,13 @@ export default function BookDetail() {
             </p>
 
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontWeight: 800, color: "var(--text-primary)", marginBottom: 8 }}>
+              <div
+                style={{
+                  fontWeight: 800,
+                  color: "var(--text-primary)",
+                  marginBottom: 8,
+                }}
+              >
                 Géneros
               </div>
 
@@ -315,8 +350,19 @@ export default function BookDetail() {
                     marginBottom: 8,
                   }}
                 >
-                  <div style={{ color: "var(--text-secondary)", fontWeight: 800, fontSize: 12 }}>
-                    Mostrando {Math.min(showAllTags ? cats.length : TAGS_COLLAPSED_COUNT, cats.length)} de {cats.length}
+                  <div
+                    style={{
+                      color: "var(--text-secondary)",
+                      fontWeight: 800,
+                      fontSize: 12,
+                    }}
+                  >
+                    Mostrando{" "}
+                    {Math.min(
+                      showAllTags ? cats.length : TAGS_COLLAPSED_COUNT,
+                      cats.length
+                    )}{" "}
+                    de {cats.length}
                   </div>
 
                   {canToggleTags && (
@@ -354,7 +400,12 @@ export default function BookDetail() {
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <IonButton expand="block" className="app-secondary-button" onClick={onStart} disabled={busy}>
+            <IonButton
+              expand="block"
+              className="app-secondary-button"
+              onClick={onStart}
+              disabled={busy}
+            >
               Empezar a leer
             </IonButton>
 
@@ -389,7 +440,13 @@ export default function BookDetail() {
             </IonButton>
 
             {msg && (
-              <div style={{ marginTop: 12, color: "var(--text-secondary)", fontWeight: 800 }}>
+              <div
+                style={{
+                  marginTop: 12,
+                  color: "var(--text-secondary)",
+                  fontWeight: 800,
+                }}
+              >
                 {msg}
               </div>
             )}

@@ -1,14 +1,27 @@
 // src/services/books.ts
 import type { Book } from "../models/Book";
 import type { UserPrefs } from "../models/UserPrefs";
+import { getJSON, setJSON } from "./storage";
 
 const SEARCH_URL = "https://openlibrary.org/search.json";
 const WORK_URL = "https://openlibrary.org/works"; // /works/OLxxxxW.json
-const SUBJECT_URL = "https://openlibrary.org/subjects"; // /subjects/{slug}.json
 const AUTHOR_URL = "https://openlibrary.org/authors"; // /authors/OLxxxxA.json
+const SUBJECT_URL = "https://openlibrary.org/subjects"; // /subjects/{slug}.json
 const COVERS = "https://covers.openlibrary.org/b/id";
 
-const DEFAULT_LANG = "es";
+const DEFAULT_LANG: "es" | "en" = "es";
+
+// ---- Diversificación / anti-repetición ----
+const RECENT_RECS_KEY = "recent_recs_v1";
+const RECENT_RECS_MAX = 48; // cuántos IDs recordamos
+const YEAR_THRESHOLD = 1990; // "suave": prioriza >= 1990 sin excluir
+const SHUFFLE_JITTER = 0.35; // 0..1 (más alto = más random)
+
+// ---- Enriquecimiento (ediciones) ----
+// ✅ performance: menos ediciones y menos concurrencia
+const ENRICH_TAKE = 20;
+const ENRICH_CONCURRENCY = 4;
+const EDITIONS_LIMIT = 6;
 
 /** ---------- Helpers de normalización ---------- */
 
@@ -36,20 +49,33 @@ function workIdFromKey(key?: string) {
   return parts[parts.length - 1] || "";
 }
 
-function authorIdFromKey(key?: string) {
-  // "/authors/OLxxxxA" => "OLxxxxA"
-  if (!key) return "";
-  const k = String(key);
-  if (!k.includes("/")) return k;
-  const parts = k.split("/");
-  return parts[parts.length - 1] || "";
+// ✅ TIPADO FUERTE desde aquí (clave del fix)
+function authorIdFromKey(key: unknown): string | null {
+  if (typeof key !== "string") return null;
+  // "/authors/OL123A" => "OL123A"
+  const id = key.split("/").pop();
+  return id && id.trim().length > 0 ? id.trim() : null;
 }
 
 function normalizeSubjects(subjects?: string[]) {
   const raw = subjects ?? [];
-  const uniq = Array.from(new Set(raw.map((s) => String(s).trim()).filter(Boolean)));
-  // Nota: en listados (cards) conviene recortar; en detalle ya estás manejando ver más/menos en BookDetail
+  const uniq = Array.from(
+    new Set(raw.map((s) => String(s).trim()).filter(Boolean))
+  );
   return uniq.slice(0, 10);
+}
+
+function parseYear(publishedDate?: string): number {
+  if (!publishedDate) return 0;
+  const m = String(publishedDate).match(/\d{4}/);
+  if (!m) return 0;
+  const y = Number(m[0]);
+  if (!Number.isFinite(y)) return 0;
+  return y;
+}
+
+function isRecentYear(year: number, threshold = YEAR_THRESHOLD) {
+  return year >= threshold;
 }
 
 /** Para search.json (Solr) */
@@ -60,9 +86,41 @@ function subjectQuery(subject: string) {
   return `subject:${s}`;
 }
 
-export function estimateHours(pageCount?: number, pagesPerHour = 35): number | null {
+export function estimateHours(
+  pageCount?: number,
+  pagesPerHour = 35
+): number | null {
   if (!pageCount || pageCount <= 0) return null;
   return Math.max(1, Math.round((pageCount / pagesPerHour) * 10) / 10);
+}
+
+/** ---------- Utilidad: shuffle ---------- */
+function shuffleInPlace<T>(arr: T[]) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * "Jitter": después del sort, metemos una pequeña mezcla para que no salgan
+ * siempre los mismos 6.
+ */
+function jitterShuffle<T>(arr: T[], strength = SHUFFLE_JITTER) {
+  if (arr.length < 3) return arr;
+  if (strength <= 0) return arr;
+
+  // copiamos para no mutar accidentalmente si se reusa
+  const out = arr.slice();
+  const swaps = Math.floor(out.length * strength);
+
+  for (let k = 0; k < swaps; k++) {
+    const i = Math.floor(Math.random() * out.length);
+    const j = Math.floor(Math.random() * out.length);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 /** ---------- SEARCH (Explore) ---------- */
@@ -73,7 +131,12 @@ async function olSearch(params: URLSearchParams): Promise<any[]> {
     const res = await fetch(url);
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      console.error("OpenLibrary search error:", res.status, url, txt.slice(0, 200));
+      console.error(
+        "OpenLibrary search error:",
+        res.status,
+        url,
+        txt.slice(0, 200)
+      );
       return [];
     }
     const data = await res.json();
@@ -93,9 +156,11 @@ function mapDocToBook(doc: any): Book {
   const appLang = toAppLangFromOL(firstLang);
 
   const pageCount =
-    typeof doc?.number_of_pages_median === "number" ? doc.number_of_pages_median : undefined;
+    typeof doc?.number_of_pages_median === "number"
+      ? doc.number_of_pages_median
+      : undefined;
 
-  return {
+  const b: Book = {
     id: workId,
     title: doc?.title ?? "Sin título",
     authors: Array.isArray(doc?.author_name) ? doc.author_name : undefined,
@@ -105,8 +170,16 @@ function mapDocToBook(doc: any): Book {
     categories: subjects,
     thumbnail: coverUrl(doc?.cover_i, "M"),
     previewLink: workId ? `https://openlibrary.org/works/${workId}` : undefined,
-    publishedDate: doc?.first_publish_year ? String(doc.first_publish_year) : undefined,
+    publishedDate: doc?.first_publish_year
+      ? String(doc.first_publish_year)
+      : undefined,
   };
+
+  // señales de popularidad (cuando existan)
+  (b as any).__editionCount =
+    typeof doc?.edition_count === "number" ? doc.edition_count : undefined;
+
+  return b;
 }
 
 export async function searchBooks(
@@ -116,21 +189,24 @@ export async function searchBooks(
   const q = query.trim();
   const maxResults = opts?.maxResults ?? 20;
 
-  if (!q) return getRecommendedBooks({ lang: opts?.lang ?? DEFAULT_LANG, maxResults });
+  if (!q)
+    return getRecommendedBooks({ lang: opts?.lang ?? DEFAULT_LANG, maxResults });
 
   const params = new URLSearchParams({
     q,
     limit: String(maxResults),
     // lang influye pero NO excluye
     lang: opts?.lang ?? DEFAULT_LANG,
-    fields: "key,title,author_name,cover_i,first_publish_year,language,subject,number_of_pages_median",
+    // agregamos edition_count para señal de popularidad
+    fields:
+      "key,title,author_name,cover_i,first_publish_year,language,subject,number_of_pages_median,edition_count",
   });
 
   const docs = await olSearch(params);
   return docs.map(mapDocToBook);
 }
 
-/** ---------- WORK + EDITIONS (para BookDetail y enriquecer páginas) ---------- */
+/** ---------- WORK + EDITIONS + AUTHOR (para BookDetail / enriquecer) ---------- */
 
 async function fetchWork(workId: string) {
   const url = `${WORK_URL}/${encodeURIComponent(workId)}.json`;
@@ -139,11 +215,26 @@ async function fetchWork(workId: string) {
   return res.json();
 }
 
-async function fetchEditions(workId: string, limit = 15) {
+async function fetchEditions(workId: string, limit = EDITIONS_LIMIT) {
   const url = `${WORK_URL}/${encodeURIComponent(workId)}/editions.json?limit=${limit}`;
   const res = await fetch(url);
   if (!res.ok) return null;
   return res.json();
+}
+
+async function fetchAuthorName(authorId: string): Promise<string | null> {
+  const id = String(authorId || "").trim();
+  if (!id) return null;
+  const url = `${AUTHOR_URL}/${encodeURIComponent(id)}.json`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const name = typeof data?.name === "string" ? data.name.trim() : "";
+    return name || null;
+  } catch {
+    return null;
+  }
 }
 
 function pickEditionPages(editions: any[] | undefined) {
@@ -173,38 +264,28 @@ function normalizeDescription(desc: any): string | undefined {
   return undefined;
 }
 
-/** ---------- AUTHORS (para que en detalle sí salga autor) ---------- */
-
-async function fetchAuthorName(authorId: string): Promise<string | null> {
-  const clean = String(authorId || "").trim();
-  if (!clean) return null;
-
-  const url = `${AUTHOR_URL}/${encodeURIComponent(clean)}.json`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const name = typeof data?.name === "string" ? data.name.trim() : "";
-    return name || null;
-  } catch {
-    return null;
-  }
+function isNonEmptyString(x: unknown): x is string {
+  return typeof x === "string" && x.trim().length > 0;
 }
 
 async function pickWorkAuthors(work: any, max = 3): Promise<string[] | undefined> {
-  // work.authors suele ser: [{ author: { key: "/authors/OL..A" }, type: {...}}]
-  const arr: any[] = Array.isArray(work?.authors) ? work.authors : [];
-  const ids: string[] = arr
-    .map((a: any) => authorIdFromKey(a?.author?.key))
-    .filter((id: string) => Boolean(id));
+  const arr = Array.isArray(work?.authors) ? work.authors : [];
+
+  // ✅ aquí forzamos el tipo real: (string | null)[]
+  const idsRaw: (string | null)[] = arr.map((a: any) =>
+    authorIdFromKey(a?.author?.key)
+  );
+
+  // ✅ aquí TS ya sabe que ids es string[]
+  const ids: string[] = idsRaw.filter(isNonEmptyString);
 
   const uniqIds: string[] = Array.from(new Set(ids)).slice(0, max);
   if (uniqIds.length === 0) return undefined;
 
-  // ✅ FIX: evita uniqIds.map(fetchAuthorName) directo y usa type guard en filter
-  const names = (await Promise.all(uniqIds.map((id) => fetchAuthorName(id)))).filter(
-    (n): n is string => Boolean(n)
-  );
+  const namesRaw = await Promise.all(uniqIds.map((id) => fetchAuthorName(id)));
+
+  // si fetchAuthorName devuelve string | null
+  const names: string[] = namesRaw.filter(isNonEmptyString);
 
   return names.length ? names : undefined;
 }
@@ -222,9 +303,10 @@ export async function getBookById(id: string): Promise<Book | null> {
     const subjects = normalizeSubjects(work?.subjects);
     const desc = normalizeDescription(work?.description);
 
-    const coverId = typeof work?.covers?.[0] === "number" ? work.covers[0] : undefined;
+    const coverId =
+      typeof work?.covers?.[0] === "number" ? work.covers[0] : undefined;
 
-    // ✅ autores desde Work API + Authors API
+    // autores desde Work API (si existen)
     const authors = await pickWorkAuthors(work, 3);
 
     return {
@@ -237,7 +319,11 @@ export async function getBookById(id: string): Promise<Book | null> {
       categories: subjects,
       thumbnail: coverUrl(coverId, "L") ?? coverUrl(coverId, "M"),
       previewLink: `https://openlibrary.org/works/${id}`,
-      publishedDate: work?.created?.value ? String(work.created.value).slice(0, 10) : undefined,
+      // mejor: first_publish_date o first_publish_year si existe; si no, created
+      publishedDate:
+        (work?.first_publish_date ? String(work.first_publish_date) : undefined) ??
+        (work?.first_publish_year ? String(work.first_publish_year) : undefined) ??
+        (work?.created?.value ? String(work.created.value).slice(0, 10) : undefined),
     };
   } catch (e) {
     console.error("OpenLibrary getBookById failed:", id, e);
@@ -254,24 +340,27 @@ export async function getRecommendedBooks(opts?: {
 }): Promise<Book[]> {
   const maxResults = opts?.maxResults ?? 10;
 
-  const baseQuery = opts?.genre ? subjectQuery(opts.genre) : "popular OR recommended OR classics";
+  const baseQuery = opts?.genre
+    ? subjectQuery(opts.genre)
+    : "popular OR recommended OR classics";
 
   const params = new URLSearchParams({
     q: baseQuery,
     limit: String(maxResults),
     lang: opts?.lang ?? DEFAULT_LANG,
-    fields: "key,title,author_name,cover_i,first_publish_year,language,subject,number_of_pages_median",
+    fields:
+      "key,title,author_name,cover_i,first_publish_year,language,subject,number_of_pages_median,edition_count",
   });
 
   const docs = await olSearch(params);
   return docs.map(mapDocToBook);
 }
 
-/** ---------- SUBJECTS API (para que “Romance => Romance”) ---------- */
+/** ---------- SUBJECTS API (género => works reales) ---------- */
 
 /**
- * Mapeo: Género “bonito” (tu UI) => slugs reales/útiles en Subjects API.
- * Nota: esto no tiene que ser perfecto desde el día 1; lo vas ampliando.
+ * Mapeo: Género (UI) => slugs de Subjects API.
+ * Se puede ir ampliando con el tiempo.
  */
 const genreToSubjectSlugs: Record<string, string[]> = {
   Romance: ["romance", "love", "love_stories"],
@@ -298,13 +387,17 @@ async function fetchSubjectWorks(slug: string, limit = 40): Promise<any[]> {
   const clean = String(slug || "").trim();
   if (!clean) return [];
 
-  // details=true trae más info por work en muchos casos
   const url = `${SUBJECT_URL}/${encodeURIComponent(clean)}.json?limit=${limit}&details=true`;
   try {
     const res = await fetch(url);
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      console.error("OpenLibrary subject error:", res.status, url, txt.slice(0, 200));
+      console.error(
+        "OpenLibrary subject error:",
+        res.status,
+        url,
+        txt.slice(0, 200)
+      );
       return [];
     }
     const data = await res.json();
@@ -324,24 +417,35 @@ function mapSubjectWorkToBook(work: any): Book {
       : undefined;
 
   const subjects = normalizeSubjects(
-    Array.isArray(work?.subject) ? work.subject : Array.isArray(work?.subjects) ? work.subjects : []
+    Array.isArray(work?.subject)
+      ? work.subject
+      : Array.isArray(work?.subjects)
+      ? work.subjects
+      : []
   );
 
   const coverId = typeof work?.cover_id === "number" ? work.cover_id : undefined;
 
-  return {
+  const b: Book = {
     id: workId,
     title: work?.title ?? "Sin título",
     authors,
     description: undefined,
-    // Subjects API NO trae páginas; luego intentamos enriquecer por ediciones
-    pageCount: undefined,
-    language: undefined,
+    pageCount: undefined, // Subjects API no trae páginas
+    language: undefined, // se intenta poblar en enrich
     categories: subjects,
     thumbnail: coverUrl(coverId, "M"),
     previewLink: workId ? `https://openlibrary.org/works/${workId}` : undefined,
-    publishedDate: work?.first_publish_year ? String(work.first_publish_year) : undefined,
+    publishedDate: work?.first_publish_year
+      ? String(work.first_publish_year)
+      : undefined,
   };
+
+  // señal de popularidad: edition_count
+  (b as any).__editionCount =
+    typeof work?.edition_count === "number" ? work.edition_count : undefined;
+
+  return b;
 }
 
 function subjectsFromGenres(genres: string[]) {
@@ -373,6 +477,13 @@ function uniqById(list: Book[]) {
   return Array.from(m.values());
 }
 
+/**
+ * Orden "suave":
+ * - prioriza >= YEAR_THRESHOLD
+ * - dentro de recientes: más nuevo primero
+ * - luego (si NEW): más corto primero
+ * - y agrega señales de popularidad cuando existan
+ */
 function filterAndSortForPrefs(books: Book[], prefs: UserPrefs | null) {
   const maxHours = maxHoursFromPrefs(prefs);
   const maxPages = maxPagesFromPrefs(prefs);
@@ -389,46 +500,122 @@ function filterAndSortForPrefs(books: Book[], prefs: UserPrefs | null) {
     return true;
   });
 
-  // NEW: prioriza más cortos (si hay pageCount)
-  if (prefs?.level === "NEW") {
-    filtered = filtered.sort((a, b) => {
+  filtered = filtered.sort((a, b) => {
+    const ya = parseYear(a.publishedDate);
+    const yb = parseYear(b.publishedDate);
+
+    const ra = isRecentYear(ya) ? 1 : 0;
+    const rb = isRecentYear(yb) ? 1 : 0;
+
+    // 1) recientes primero
+    if (ra !== rb) return rb - ra;
+
+    // 2) más nuevo primero
+    if (ya !== yb) return yb - ya;
+
+    // 3) señal de popularidad: edition_count (si existe)
+    const ea = Number((a as any).__editionCount ?? 0);
+    const eb = Number((b as any).__editionCount ?? 0);
+    if (ea !== eb) return eb - ea;
+
+    // 4) NEW: prioriza más cortos (si hay pageCount)
+    if (prefs?.level === "NEW") {
       const ha = estimateHours(a.pageCount ?? 0) ?? 999;
       const hb = estimateHours(b.pageCount ?? 0) ?? 999;
-      return ha - hb;
-    });
-  }
+      if (ha !== hb) return ha - hb;
+    }
+
+    // 5) desempate estable
+    return String(a.title || "").localeCompare(String(b.title || ""));
+  });
+
+  // 6) pequeña mezcla para variedad
+  filtered = jitterShuffle(filtered, SHUFFLE_JITTER);
 
   return filtered;
 }
 
 /**
- * Enriquecer algunos libros con páginas/idioma usando ediciones.
- * (Mejora BookCard y BookDetail cuando navegas desde Home)
+ * Enriquecer libros con páginas/idioma usando ediciones.
  */
-async function enrichWithEditions(books: Book[], take = 14): Promise<Book[]> {
+async function enrichWithEditions(books: Book[], take = ENRICH_TAKE): Promise<Book[]> {
   const head = books.slice(0, take);
   const tail = books.slice(take);
 
-  const enrichedHead = await Promise.all(
-    head.map(async (b) => {
-      try {
-        const ed = await fetchEditions(b.id, 12);
-        const editions = ed?.entries ?? [];
-        const pageCount = pickEditionPages(editions);
-        const lang = pickEditionLang(editions);
+  const out: Book[] = [];
+  let i = 0;
 
-        return {
-          ...b,
-          pageCount: typeof pageCount === "number" ? pageCount : b.pageCount,
-          language: lang ?? b.language,
-        };
-      } catch {
-        return b;
-      }
-    })
-  );
+  while (i < head.length) {
+    const chunk = head.slice(i, i + ENRICH_CONCURRENCY);
 
-  return [...enrichedHead, ...tail];
+    const enrichedChunk = await Promise.all(
+      chunk.map(async (b) => {
+        try {
+          const ed = await fetchEditions(b.id, EDITIONS_LIMIT);
+          const editions = ed?.entries ?? [];
+          const pageCount = pickEditionPages(editions);
+          const lang = pickEditionLang(editions);
+
+          return {
+            ...b,
+            pageCount: typeof pageCount === "number" ? pageCount : b.pageCount,
+            language: lang ?? b.language,
+          };
+        } catch {
+          return b;
+        }
+      })
+    );
+
+    out.push(...enrichedChunk);
+    i += ENRICH_CONCURRENCY;
+  }
+
+  return [...out, ...tail];
+}
+
+/** ---------- Anti-repetición: recordar IDs mostrados ---------- */
+
+async function getRecentRecIds(): Promise<string[]> {
+  const ids = await getJSON<string[]>(RECENT_RECS_KEY, []);
+  return Array.isArray(ids) ? ids.filter(Boolean) : [];
+}
+
+async function pushRecentRecIds(newIds: string[]) {
+  const prev = await getRecentRecIds();
+  const merged = Array.from(new Set([...newIds, ...prev])).slice(0, RECENT_RECS_MAX);
+  await setJSON(RECENT_RECS_KEY, merged);
+}
+
+function applyRecentExclusion(pool: Book[], recentIds: string[], keepAtLeast = 10) {
+  if (!recentIds.length) return pool;
+
+  const set = new Set(recentIds);
+  const filtered = pool.filter((b) => !set.has(b.id));
+
+  // si nos quedamos muy cortos, no excluimos (suave)
+  if (filtered.length < keepAtLeast) return pool;
+
+  return filtered;
+}
+
+/** ---------- Idiomas: split ---------- */
+
+function splitByLanguage(books: Book[]) {
+  const es: Book[] = [];
+  const en: Book[] = [];
+  const other: Book[] = [];
+
+  for (const b of books) {
+    if (b.language === "es") es.push(b);
+    else if (b.language === "en") en.push(b);
+    else other.push(b);
+  }
+
+  // “other” lo repartimos al final (si no sabemos, ES por defecto)
+  for (const b of other) es.push(b);
+
+  return { es, en };
 }
 
 /** ---------- Recomendaciones por usuario (HOME) ---------- */
@@ -439,32 +626,45 @@ export async function getRecommendedBooksForUser(
 ): Promise<Book[]> {
   const maxResults = opts.maxResults ?? 6;
 
+  // Tomamos slugs asociados a géneros elegidos
   const slugs = subjectsFromGenres(prefs?.genres ?? []);
 
-  // Pool grande para variedad
-  const targetPool = Math.max(40, maxResults * 8);
-  const perSlug = 40;
+  // ✅ performance: pool más pequeño y menos items por slug
+  const targetPool = Math.max(36, maxResults * 8);
+  const perSlug = 24;
 
   let pool: Book[] = [];
 
-  // 1) Si hay géneros: Subjects API (respeta género)
+  // 1) Si hay géneros: Subjects API
   if (slugs.length > 0) {
-    for (const slug of slugs) {
-      const works = await fetchSubjectWorks(slug, perSlug);
-      const mapped = works.map(mapSubjectWorkToBook).filter((b) => !!b.id);
+    const slugsShuffled = shuffleInPlace(slugs.slice());
+
+    // ✅ performance: batches paralelos (3 slugs a la vez)
+    const BATCH = 3;
+
+    for (let i = 0; i < slugsShuffled.length; i += BATCH) {
+      const batch = slugsShuffled.slice(i, i + BATCH);
+
+      const results = await Promise.all(
+        batch.map((slug) => fetchSubjectWorks(slug, perSlug))
+      );
+
+      const mergedWorks = results.flat();
+      const mapped = mergedWorks.map(mapSubjectWorkToBook).filter((b) => !!b.id);
+
       pool = uniqById([...pool, ...mapped]);
 
       if (pool.length >= targetPool) break;
     }
 
-    // enriquecer un poco para páginas/idioma
-    pool = await enrichWithEditions(pool, 14);
+    // enriquecer items (language/pageCount) — ahora más barato
+    pool = await enrichWithEditions(pool, ENRICH_TAKE);
 
-    // aplicar filtros
+    // filtros + orden suave + jitter
     pool = filterAndSortForPrefs(pool, prefs);
   }
 
-  // 2) Fallback
+  // 2) Fallback: búsqueda amplia
   if (pool.length < maxResults) {
     const fb = await getRecommendedBooks({
       maxResults: Math.max(60, maxResults * 12),
@@ -473,5 +673,34 @@ export async function getRecommendedBooksForUser(
     pool = filterAndSortForPrefs(uniqById([...pool, ...fb]), prefs);
   }
 
-  return pool.slice(0, maxResults);
+  // 3) Anti-repetición (suave)
+  const recent = await getRecentRecIds();
+  pool = applyRecentExclusion(pool, recent, Math.max(10, maxResults * 3));
+
+  // 4) Cortar y recordar IDs mostrados
+  const chosen = pool.slice(0, maxResults);
+  await pushRecentRecIds(chosen.map((b) => b.id));
+
+  return chosen;
+}
+
+/**
+ * Recomendaciones separadas por idioma (para UI por secciones).
+ */
+export async function getRecommendedBooksForUserSplitByLanguage(
+  prefs: UserPrefs | null,
+  opts: { maxPerLang?: number } = {}
+): Promise<{ es: Book[]; en: Book[] }> {
+  const maxPerLang = opts.maxPerLang ?? 6;
+
+  const combined = await getRecommendedBooksForUser(prefs, {
+    maxResults: Math.max(24, maxPerLang * 6),
+  });
+
+  const { es, en } = splitByLanguage(combined);
+
+  return {
+    es: es.slice(0, maxPerLang),
+    en: en.slice(0, maxPerLang),
+  };
 }
