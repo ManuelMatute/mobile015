@@ -1,7 +1,7 @@
 import type { Book } from "../models/Book";
 import { getJSON, setJSON } from "./storage";
 
-const KEY_NOW = "reading_now_v1";
+const KEY_NOW = "reading_now_v1"; // ahora será Book[] (compatible con el formato viejo)
 const KEY_TO_READ = "to_read_v1";
 const KEY_DONE = "finished_v1";
 const KEY_PROGRESS = "reading_progress_v1";
@@ -18,12 +18,31 @@ function withoutId(list: Book[], id: string) {
   return list.filter((b) => b.id !== id);
 }
 
-export async function getReadingNow(): Promise<Book | null> {
-  return getJSON<Book | null>(KEY_NOW, null);
+// ✅ MIGRACIÓN: soporta viejo (Book) y nuevo (Book[])
+async function readNowCompat(): Promise<Book[]> {
+  const raw = await getJSON<any>(KEY_NOW, null);
+
+  // nuevo formato: array
+  if (Array.isArray(raw)) {
+    return raw.filter((x) => x && typeof x.id === "string");
+  }
+
+  // viejo formato: un solo book
+  if (raw && typeof raw === "object" && typeof raw.id === "string") {
+    const migrated = [raw as Book];
+    await setJSON(KEY_NOW, migrated);
+    return migrated;
+  }
+
+  return [];
 }
 
-export async function setReadingNow(book: Book | null) {
-  await setJSON(KEY_NOW, book);
+export async function getReadingNow(): Promise<Book[]> {
+  return readNowCompat();
+}
+
+export async function setReadingNow(list: Book[]) {
+  await setJSON(KEY_NOW, uniqById(list));
 }
 
 export async function getToRead(): Promise<Book[]> {
@@ -50,10 +69,18 @@ export async function setProgress(map: ProgressMap) {
   await setJSON(KEY_PROGRESS, map);
 }
 
+// ✅ ahora "empezar a leer" agrega el libro al array de leyendo
 export async function startReading(book: Book) {
-  const [toRead, done, progress] = await Promise.all([getToRead(), getFinished(), getProgress()]);
+  const [now, toRead, done, progress] = await Promise.all([
+    getReadingNow(),
+    getToRead(),
+    getFinished(),
+    getProgress(),
+  ]);
 
-  await setReadingNow(book);
+  const nextNow = uniqById([book, ...withoutId(now, book.id)]);
+  await setReadingNow(nextNow);
+
   await setToRead(withoutId(toRead, book.id));
   await setFinished(withoutId(done, book.id));
 
@@ -64,30 +91,46 @@ export async function startReading(book: Book) {
 }
 
 export async function addToRead(book: Book) {
-  const [toRead, done] = await Promise.all([getToRead(), getFinished()]);
-  const next = uniqById([book, ...withoutId(withoutId(toRead, book.id), book.id)]);
+  const [now, toRead, done] = await Promise.all([
+    getReadingNow(),
+    getToRead(),
+    getFinished(),
+  ]);
+
+  // si lo mandas a "por leer", lo sacamos de "leyendo" también
+  await setReadingNow(withoutId(now, book.id));
+
+  const next = uniqById([book, ...withoutId(toRead, book.id)]);
   await setToRead(next);
   await setFinished(withoutId(done, book.id));
 }
 
 export async function markFinished(book: Book) {
-  const [toRead, done, now, progress] = await Promise.all([
+  const [now, toRead, done, progress] = await Promise.all([
+    getReadingNow(),
     getToRead(),
     getFinished(),
-    getReadingNow(),
     getProgress(),
   ]);
 
+  // sacarlo de leyendo
+  await setReadingNow(withoutId(now, book.id));
+
+  // mover a terminados
   const nextDone = uniqById([book, ...withoutId(done, book.id)]);
   await setFinished(nextDone);
+
+  // sacarlo de por leer
   await setToRead(withoutId(toRead, book.id));
 
-  if (now?.id === book.id) {
-    await setReadingNow(null);
-  }
-
+  // progreso al 100%
   const nextProgress = { ...progress, [book.id]: 100 };
   await setProgress(nextProgress);
+}
+
+export async function removeFromNow(id: string) {
+  const now = await getReadingNow();
+  await setReadingNow(withoutId(now, id));
 }
 
 export async function removeFromToRead(id: string) {
