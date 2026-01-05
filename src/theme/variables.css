@@ -1,3 +1,48 @@
-/* For information on how to create your own theme, please refer to:
-http://ionicframework.com/docs/theming/ */
-:root {}
+:root {
+  /* ---------- Brand / UI colors (se quedan) ---------- */
+  --orange-primary: #FF6B35;
+  --orange-secondary: #FF9E1F;
+  --orange-light: #FFB347;
+  --orange-lighter: #FFE8D6;
+  --orange-dark: #E55A2B;
+  --background-light: #FFF9F5;
+  --border-color: #E2E8F0;
+  --success-color: #38A169;
+
+  /* ---------- NEW: Tipografía global (como Inicio) ---------- */
+  --app-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* ---------- NEW: Texto en negro (como pediste) ---------- */
+  --text-primary: #111111;     /* negro */
+  --text-secondary: #333333;   /* gris oscuro */
+
+  /* ---------- Ionic Theme ---------- */
+  --ion-color-primary: #FF6B35;
+  --ion-color-primary-rgb: 255,107,53;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255,255,255;
+  --ion-color-primary-shade: #e55a2b;
+  --ion-color-primary-tint: #ff7b4e;
+
+  --ion-background-color: #FFF9F5;
+
+  /* ✅ Importante: fuerza texto negro en Ionic */
+  --ion-text-color: #111111;
+  --ion-text-color-rgb: 17,17,17;
+}
+
+/* ---------- Paleta crema (la dejamos, pero NO usamos cream-text para texto general) ---------- */
+:root {
+  --cream-bg-1: #f5e6d3;
+  --cream-bg-2: #fdf5e6;
+  --terracotta: #d97639;
+  --burnt-orange: #c26433;
+  --soft-orange: #e8965e;
+  --warm-brown: #8b5a2b;
+  --cream-text: #fef9f3; /* solo úsalo en botones o header si quieres */
+}
+
+/* ---------- NEW: Aplicar tipografía a toda la app ---------- */
+html, body, ion-app, ion-content, ion-title, ion-label, ion-button, ion-card, ion-text {
+  font-family: var(--app-font) !important;
+}

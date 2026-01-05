@@ -5,5 +5,4 @@ export type UserPrefs = {
   level: ReadingLevel;
   genres: string[];
   dailyMinutesGoal: 5 | 10 | 20;
-  languageMode: "ES" | "BILINGUAL";
 };

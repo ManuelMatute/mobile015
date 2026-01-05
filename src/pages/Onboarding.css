@@ -235,59 +235,6 @@
   text-align: center;
 }
 
-/* Idioma */
-.language-options {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.language-card {
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  border: 2px solid transparent;
-  background: white;
-}
-
-.language-card.selected {
-  border-color: var(--orange-primary);
-  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
-}
-
-.language-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.language-icon {
-  font-size: 1.75rem;
-}
-
-.language-card h3 {
-  color: var(--text-primary);
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.language-description {
-  color: var(--text-secondary);
-  margin: 0;
-  font-size: 0.9rem;
-  text-align: left;
-}
-
-.language-check {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  color: var(--orange-primary);
-  font-size: 1.5rem;
-}
-
 /* Botones de navegación */
 .navigation-buttons {
   display: flex;
@@ -327,7 +274,7 @@
 }
 
 /* Animaciones */
-.level-card, .goal-card, .language-card {
+.level-card, .goal-card {
   animation: fadeInUp 0.5s ease;
 }
 
@@ -345,15 +292,14 @@
 /* Responsive */
 @media (min-width: 768px) {
   .options-grid,
-  .goals-container,
-  .language-options {
+  .goals-container {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   .step-container {
     padding: 2rem 2rem 3rem;
   }
-  
+
   .step-indicators {
     padding: 3rem 1rem 1rem;
   }

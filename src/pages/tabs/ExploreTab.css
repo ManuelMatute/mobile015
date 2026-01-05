@@ -1,0 +1,185 @@
+/* src/pages/tabs/ExploreTab.css */
+
+.explore-hero {
+  background: linear-gradient(90deg, var(--orange-dark), var(--orange-primary));
+  padding: 22px 14px 18px 14px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: var(--app-shadow-soft);
+  margin: 10px 0 12px 0;
+}
+
+.explore-hero-inner {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.explore-hero-title {
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+
+.explore-hero-sub {
+  opacity: 0.9;
+  margin-top: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.explore-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.explore-search-inputWrap {
+  flex: 1;
+  min-width: 240px;
+  background: white;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  box-shadow: var(--app-shadow-soft);
+}
+
+.explore-search-icon {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.explore-search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.explore-filter-btn,
+.explore-search-btn {
+  height: 42px;
+  margin: 0;
+}
+
+/* Panel filtros */
+.explore-filters {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--app-shadow-soft);
+  padding: 14px;
+  margin: 8px 0 12px 0;
+}
+
+.explore-filters-title {
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.explore-filters-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.explore-chip {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.explore-chip.is-active {
+  background: var(--orange-lighter);
+  border-color: rgba(255, 107, 53, 0.35);
+  color: var(--orange-dark);
+}
+
+.explore-filters-hint {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* Body */
+.explore-body {
+  margin-top: 10px;
+}
+
+.explore-empty {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--app-shadow-soft);
+  padding: 26px 16px;
+  text-align: center;
+}
+
+.explore-empty-emoji {
+  font-size: 3.2rem;
+  margin-bottom: 10px;
+}
+
+.explore-empty-title {
+  font-weight: 900;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.explore-empty-sub {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+/* Resultados */
+.explore-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.explore-results-title {
+  font-weight: 900;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.explore-results-count {
+  color: var(--text-secondary);
+  font-weight: 800;
+  margin-left: 6px;
+}
+
+/* Grid usando tu BookCard existente */
+.explore-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .explore-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Para que IonCard no meta margen raro en grid */
+.explore-grid-item .book-card-v2 {
+  width: 100%;
+}
