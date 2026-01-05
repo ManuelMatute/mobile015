@@ -1,0 +1,322 @@
+/* src/pages/BookDetail.css */
+
+.bookdetail-page {
+  /* Tipografía igual que Inicio (system font) */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* Fondo crema */
+  --bd-bg: linear-gradient(135deg, #f5e6d3 0%, #fdf5e6 100%);
+  --bd-content: #fefdfb;
+
+  --bd-header: linear-gradient(135deg, #d97639 0%, #e8965e 100%);
+  --bd-header-border: #c26433;
+
+  /* ✅ TEXTO NEGRO + sin sombra */
+  --bd-title: #111111;
+  --bd-title-shadow: none;
+
+  --bd-text: #111111;
+  --bd-label: #111111;
+
+  --bd-actions-bg: #f9f3ea;
+  --bd-actions-border: #e8d9c5;
+
+  --bd-tag: linear-gradient(135deg, #e8965e 0%, #d97639 100%);
+  --bd-tag-hover: linear-gradient(135deg, #f0a670 0%, #e07d42 100%);
+
+  background: var(--bd-bg);
+}
+
+/* el IonContent tiene su propio fondo; lo reforzamos */
+.bookdetail-page ion-content {
+  --background: transparent;
+}
+
+/* contenedor general */
+.bookdetail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* HEADER */
+.bookdetail-header {
+  background: var(--bd-header);
+  padding: 26px 34px;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 4px 20px rgba(217, 118, 57, 0.3);
+  border-bottom: 3px solid var(--bd-header-border);
+}
+
+.bookdetail-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--bd-title);
+  text-shadow: var(--bd-title-shadow);
+  letter-spacing: 1px;
+  line-height: 1.1;
+}
+
+/* CONTENT */
+.bookdetail-content {
+  background: var(--bd-content);
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 10px 40px rgba(139, 90, 43, 0.15);
+  overflow: hidden;
+}
+
+/* Layout */
+.bookdetail-layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 40px;
+  padding: 40px;
+}
+
+.bookdetail-coverWrap {
+  position: relative;
+}
+
+.bookdetail-cover {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.30);
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.bookdetail-cover:hover {
+  transform: scale(1.02);
+}
+
+.bookdetail-coverFallback {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookdetail-coverInitial {
+  font-size: 3rem;
+  font-weight: 900;
+  color: rgba(0,0,0,0.45);
+}
+
+.bookdetail-details {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.bookdetail-sectionTitle {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--bd-label);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #d97639;
+}
+
+.bookdetail-detailItem {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.bookdetail-label {
+  font-weight: 700;
+  color: var(--bd-label);
+  min-width: 160px;
+}
+
+.bookdetail-value {
+  color: var(--bd-text);
+}
+
+/* Géneros */
+.bookdetail-genresHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bookdetail-genresCount {
+  /* ✅ ahora negro igual que el texto */
+  color: var(--bd-text);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.bookdetail-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.bookdetail-genreTag {
+  background: var(--bd-tag);
+  /* ✅ como --bd-title ahora es negro, los tags quedan con texto negro */
+  color: var(--bd-title);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(217, 118, 57, 0.25);
+}
+
+.bookdetail-genreTag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 118, 57, 0.35);
+  background: var(--bd-tag-hover);
+}
+
+/* ACTIONS */
+.bookdetail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 30px 40px;
+  background: var(--bd-actions-bg);
+  border-top: 1px solid var(--bd-actions-border);
+}
+
+/* Botones tipo Claude */
+.btn {
+  padding: 14px 28px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(139, 90, 43, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  /* ✅ dejo texto blanco en botones (mejor contraste) */
+  color: #fef9f3;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 90, 43, 0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(139, 90, 43, 0.12);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #d97639 0%, #c26433 100%);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #c8956e 0%, #a67c52 100%);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #8fae7a 0%, #6e8f5d 100%);
+}
+
+.btn-today {
+  background: linear-gradient(135deg, #e8a87c 0%, #d9916a 100%);
+}
+
+/* íconos con pseudo */
+.btn-icon::before {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.btn-start::before {
+  content: "📖";
+}
+
+.btn-add::before {
+  content: "➕";
+}
+
+.btn-complete::before {
+  content: "✓";
+}
+
+.btn-today::before {
+  content: "📅";
+}
+
+/* Mensaje de feedback */
+.bookdetail-msg {
+  margin-top: 12px;
+  padding: 0 8px;
+  color: var(--bd-text);
+  font-weight: 800;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .bookdetail-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .bookdetail-coverWrap {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .bookdetail-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .bookdetail-container {
+    padding: 12px;
+  }
+
+  .bookdetail-header {
+    padding: 20px;
+  }
+
+  .bookdetail-title {
+    font-size: 1.5rem;
+  }
+
+  .bookdetail-layout {
+    padding: 20px;
+  }
+
+  .bookdetail-actions {
+    padding: 20px;
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bookdetail-label {
+    min-width: 120px;
+  }
+}

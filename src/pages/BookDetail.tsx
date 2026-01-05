@@ -1,4 +1,4 @@
-// BookDetail.tsx
+// src/pages/BookDetail.tsx
 import {
   IonButton,
   IonContent,
@@ -16,9 +16,11 @@ import { markReadToday } from "../services/streak";
 import { getJSON } from "../services/storage";
 import { addToRead, markFinished, startReading } from "../services/library";
 
+import "./BookDetail.css";
+
 const PREFS_KEY = "user_prefs_v1";
 
-// B) Tags “Ver más”
+// Tags “Ver más”
 const TAGS_COLLAPSED_COUNT = 10;
 const TAGS_MAX_IN_DETAIL = 80;
 
@@ -29,7 +31,7 @@ function uniqStrings(list: (string | undefined | null)[]) {
   return Array.from(new Set(clean));
 }
 
-// ✅ Merge explícito por campo (base manda si tiene algo, si no se rellena con incoming)
+// Merge explícito por campo (base manda si tiene algo, si no se rellena con incoming)
 function mergeBooks(base: Book, incoming: Book): Book {
   const mergedCategories = uniqStrings([
     ...(base.categories ?? []),
@@ -40,10 +42,12 @@ function mergeBooks(base: Book, incoming: Book): Book {
     id: base.id || incoming.id,
     title: base.title || incoming.title,
 
-    authors: base.authors && base.authors.length ? base.authors : incoming.authors,
+    authors:
+      base.authors && base.authors.length ? base.authors : incoming.authors,
     description: base.description ?? incoming.description,
 
-    pageCount: typeof base.pageCount === "number" ? base.pageCount : incoming.pageCount,
+    pageCount:
+      typeof base.pageCount === "number" ? base.pageCount : incoming.pageCount,
     language: base.language ?? incoming.language,
 
     thumbnail: base.thumbnail ?? incoming.thumbnail,
@@ -78,13 +82,13 @@ export default function BookDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation<LocationState>();
 
-  // ✅ 1) book inicial viene del Home/Explore (si existe)
+  // 1) book inicial viene del Home/Explore (si existe)
   const initialBook = location.state?.book ?? null;
 
   const [book, setBook] = useState<Book | null>(initialBook);
   const [prefs, setPrefs] = useState<UserPrefs | null>(null);
 
-  // ✅ Si ya tenemos initialBook, NO nos quedamos pegados en "Cargando..."
+  // Si ya tenemos initialBook, NO nos quedamos pegados en "Cargando..."
   const [loading, setLoading] = useState(!initialBook);
   const [error, setError] = useState("");
 
@@ -122,11 +126,8 @@ export default function BookDetail() {
           return;
         }
 
-        if (initialBook) {
-          setBook(mergeBooks(initialBook, bWork));
-        } else {
-          setBook(bWork);
-        }
+        if (initialBook) setBook(mergeBooks(initialBook, bWork));
+        else setBook(bWork);
       } catch (e) {
         if (!mounted) return;
         if (!initialBook) {
@@ -146,7 +147,10 @@ export default function BookDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const cats = useMemo(() => normalizeCategories(book?.categories), [book?.categories]);
+  const cats = useMemo(
+    () => normalizeCategories(book?.categories),
+    [book?.categories]
+  );
   const hasCats = cats.length > 0;
 
   const pagesPerHour = useMemo(() => pagesPerHourFromPrefs(prefs), [prefs]);
@@ -196,13 +200,7 @@ export default function BookDetail() {
         <IonContent className="app-content">
           <div className="app-container">
             <div className="app-card" style={{ padding: 16 }}>
-              <div
-                style={{
-                  fontWeight: 900,
-                  color: "var(--text-primary)",
-                  marginBottom: 8,
-                }}
-              >
+              <div style={{ fontWeight: 900, color: "var(--text-primary)", marginBottom: 8 }}>
                 No disponible
               </div>
               <div className="app-subtitle" style={{ margin: 0, fontWeight: 700 }}>
@@ -278,179 +276,138 @@ export default function BookDetail() {
   };
 
   return (
-    <IonPage className="app-page">
+    <IonPage className="app-page bookdetail-page">
+      {/* ✅ mantenemos IonHeader pero ponemos el título bonito dentro del contenido
+          (si quieres, luego quitamos IonHeader totalmente) */}
       <IonHeader className="app-header">
         <IonToolbar>
-          <IonTitle>{book.title}</IonTitle>
+          <IonTitle>Libro</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="app-content">
-        <div className="app-container">
-          {book.thumbnail && (
-            <img
-              src={book.thumbnail}
-              alt={book.title}
-              style={{
-                width: "100%",
-                maxWidth: 340,
-                borderRadius: 16,
-                marginBottom: 14,
-                boxShadow: "var(--app-shadow-soft)",
-              }}
-            />
-          )}
+        <div className="bookdetail-container">
+          {/* HEADER */}
+          <div className="bookdetail-header">
+            <div className="bookdetail-title">{book.title}</div>
+          </div>
 
-          <div className="app-card" style={{ padding: 16 }}>
-            <div
-              style={{
-                fontSize: 14,
-                color: "var(--text-secondary)",
-                fontWeight: 800,
-                marginBottom: 10,
-              }}
-            >
-              Detalles
-            </div>
-
-            <p style={{ margin: "8px 0" }}>
-              <b>Autor:</b> {authorText}
-            </p>
-
-            <p style={{ margin: "8px 0" }}>
-              <b>Páginas:</b> {pagesText}
-            </p>
-
-            <p style={{ margin: "8px 0" }}>
-              <b>Tiempo estimado:</b> {hoursText}
-            </p>
-
-            <p style={{ margin: "8px 0" }}>
-              <b>Días (según tu meta):</b> {daysText}
-            </p>
-
-            <div style={{ marginTop: 12 }}>
-              <div
-                style={{
-                  fontWeight: 800,
-                  color: "var(--text-primary)",
-                  marginBottom: 8,
-                }}
-              >
-                Géneros
+          {/* CONTENT */}
+          <div className="bookdetail-content">
+            <div className="bookdetail-layout">
+              <div className="bookdetail-coverWrap">
+                {book.thumbnail ? (
+                  <img
+                    src={book.thumbnail}
+                    alt={book.title}
+                    className="bookdetail-cover"
+                  />
+                ) : (
+                  <div className="bookdetail-coverFallback">
+                    <div className="bookdetail-coverInitial">
+                      {(book.title || "Libro").slice(0, 1).toUpperCase()}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {hasCats && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 10,
-                    marginBottom: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "var(--text-secondary)",
-                      fontWeight: 800,
-                      fontSize: 12,
-                    }}
-                  >
-                    Mostrando{" "}
-                    {Math.min(
-                      showAllTags ? cats.length : TAGS_COLLAPSED_COUNT,
-                      cats.length
-                    )}{" "}
-                    de {cats.length}
+              <div className="bookdetail-details">
+                <div className="bookdetail-section">
+                  <div className="bookdetail-sectionTitle">Detalles</div>
+
+                  <div className="bookdetail-detailItem">
+                    <span className="bookdetail-label">Autor:</span>
+                    <span className="bookdetail-value">{authorText}</span>
                   </div>
 
-                  {canToggleTags && (
-                    <IonButton
-                      fill="clear"
-                      className="app-muted-button"
-                      style={{ height: 32, margin: 0 }}
-                      onClick={() => setShowAllTags((v) => !v)}
-                    >
-                      {showAllTags ? "Ver menos" : "Ver más"}
-                    </IonButton>
-                  )}
-                </div>
-              )}
+                  <div className="bookdetail-detailItem">
+                    <span className="bookdetail-label">Páginas:</span>
+                    <span className="bookdetail-value">{pagesText}</span>
+                  </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {shownCats.map((c) => (
-                  <span
-                    key={c}
-                    style={{
-                      background: "var(--orange-lighter)",
-                      color: "var(--orange-dark)",
-                      border: "1px solid rgba(255, 107, 53, 0.25)",
-                      padding: "4px 10px",
-                      borderRadius: 999,
-                      fontSize: "0.78rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {c}
-                  </span>
-                ))}
+                  <div className="bookdetail-detailItem">
+                    <span className="bookdetail-label">Tiempo estimado:</span>
+                    <span className="bookdetail-value">{hoursText}</span>
+                  </div>
+
+                  <div className="bookdetail-detailItem">
+                    <span className="bookdetail-label">Días (según tu meta):</span>
+                    <span className="bookdetail-value">{daysText}</span>
+                  </div>
+                </div>
+
+                <div className="bookdetail-section">
+                  <div className="bookdetail-sectionTitle">Géneros</div>
+
+                  {hasCats && (
+                    <div className="bookdetail-genresHeader">
+                      <div className="bookdetail-genresCount">
+                        Mostrando{" "}
+                        {Math.min(showAllTags ? cats.length : TAGS_COLLAPSED_COUNT, cats.length)}{" "}
+                        de {cats.length}
+                      </div>
+
+                      {canToggleTags && (
+                        <IonButton
+                          fill="clear"
+                          className="app-muted-button"
+                          style={{ height: 32, margin: 0 }}
+                          onClick={() => setShowAllTags((v) => !v)}
+                        >
+                          {showAllTags ? "Ver menos" : "Ver más"}
+                        </IonButton>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="bookdetail-genres">
+                    {shownCats.map((c) => (
+                      <span key={c} className="bookdetail-genreTag">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* ACTIONS */}
+            <div className="bookdetail-actions">
+              <button
+                className="btn btn-primary btn-icon btn-start"
+                onClick={onStart}
+                disabled={busy}
+              >
+                Empezar a leer
+              </button>
+
+              <button
+                className="btn btn-secondary btn-icon btn-add"
+                onClick={onAddToRead}
+                disabled={busy}
+              >
+                Añadir a Por leer
+              </button>
+
+              <button
+                className="btn btn-success btn-icon btn-complete"
+                onClick={onFinish}
+                disabled={busy}
+              >
+                Marcar como terminado
+              </button>
+
+              <button
+                className="btn btn-today btn-icon btn-today"
+                onClick={onMarkRead}
+                disabled={busy}
+              >
+                Marcar “Leí hoy” ✓
+              </button>
             </div>
           </div>
 
-          <div style={{ marginTop: 14 }}>
-            <IonButton
-              expand="block"
-              className="app-secondary-button"
-              onClick={onStart}
-              disabled={busy}
-            >
-              Empezar a leer
-            </IonButton>
-
-            <IonButton
-              expand="block"
-              className="app-secondary-button"
-              onClick={onAddToRead}
-              disabled={busy}
-              style={{ marginTop: 10 }}
-            >
-              Añadir a Por leer
-            </IonButton>
-
-            <IonButton
-              expand="block"
-              className="app-secondary-button"
-              onClick={onFinish}
-              disabled={busy}
-              style={{ marginTop: 10 }}
-            >
-              Marcar como terminado
-            </IonButton>
-
-            <IonButton
-              expand="block"
-              className="app-primary-button"
-              onClick={onMarkRead}
-              disabled={busy}
-              style={{ marginTop: 10 }}
-            >
-              Marcar “Leí hoy” ✅
-            </IonButton>
-
-            {msg && (
-              <div
-                style={{
-                  marginTop: 12,
-                  color: "var(--text-secondary)",
-                  fontWeight: 800,
-                }}
-              >
-                {msg}
-              </div>
-            )}
-          </div>
+          {msg && <div className="bookdetail-msg">{msg}</div>}
         </div>
       </IonContent>
     </IonPage>
