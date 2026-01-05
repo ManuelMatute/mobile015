@@ -206,6 +206,56 @@ export async function searchBooks(
   return docs.map(mapDocToBook);
 }
 
+// ✅ Explore: búsqueda con filtros reales (server-side genre con Subjects API)
+export async function searchBooksWithFilters(
+  query: string,
+  opts?: { lang?: string; maxResults?: number; genre?: string }
+): Promise<Book[]> {
+  const q = (query ?? "").trim();
+  const maxResults = opts?.maxResults ?? 20;
+  const genre = (opts?.genre ?? "").trim();
+
+  // Caso 1: sin género => comportamiento actual
+  if (!genre || genre === "Todos") {
+    return searchBooks(q, { lang: opts?.lang, maxResults });
+  }
+
+  // Caso 2: con género => Subjects API (server-side)
+  const slugs = genreToSubjectSlugs[genre] ?? [];
+  if (slugs.length === 0) {
+    // si no mapeamos ese género, fallback al search normal
+    return searchBooks(q || genre, { lang: opts?.lang, maxResults });
+  }
+
+  // Traemos works por subject (varios slugs) y armamos un pool
+  const perSlug = Math.max(20, maxResults * 3);
+  const worksBatches = await Promise.all(slugs.map((s) => fetchSubjectWorks(s, perSlug)));
+
+  let pool = uniqById(
+    worksBatches
+      .flat()
+      .map(mapSubjectWorkToBook)
+      .filter((b) => !!b.id)
+  );
+
+  // Si el usuario también escribió texto, filtramos el pool por título/autor (rápido y se siente “real”)
+  if (q) {
+    const qq = q.toLowerCase();
+    pool = pool.filter((b) => {
+      const t = (b.title ?? "").toLowerCase();
+      const a = (b.authors?.join(", ") ?? "").toLowerCase();
+      return t.includes(qq) || a.includes(qq);
+    });
+  }
+
+  // (Opcional) enriquecer un poco con ediciones (páginas/idioma) sin matar performance
+  pool = await enrichWithEditions(pool, Math.min(ENRICH_TAKE, pool.length));
+
+  return pool.slice(0, maxResults);
+}
+
+
+
 /** ---------- WORK + EDITIONS + AUTHOR (para BookDetail / enriquecer) ---------- */
 
 async function fetchWork(workId: string) {
