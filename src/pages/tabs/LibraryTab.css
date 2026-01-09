@@ -157,3 +157,46 @@
   max-width: none;
   width: 100%;
 }
+
+.lib-row,
+.lib-list,
+.lib-actions {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lib-row {
+  max-width: 100%;
+}
+
+.lib-info {
+  min-width: 0;
+}
+
+.lib-title,
+.lib-sub {
+  max-width: 100%;
+}
+
+.lib-actions ion-button::part(native) {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .lib-row {
+    padding: 12px;
+  }
+
+  .lib-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lib-actions ion-button {
+    width: 100%;
+  }
+
+  .lib-actions ion-button::part(native) {
+    width: 100%;
+  }
+}
