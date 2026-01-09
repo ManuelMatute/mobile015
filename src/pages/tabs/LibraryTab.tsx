@@ -16,7 +16,7 @@ import {
   removeFromFinished,
   removeFromNow,
   removeFromToRead,
-  updateProgressPages,
+  setProgressPagesExact,
 } from "../../services/library";
 
 import "./LibraryTab.css";
@@ -60,6 +60,7 @@ export default function LibraryTab() {
   const [toRead, setToReadList] = useState<Book[]>([]);
   const [done, setDoneList] = useState<Book[]>([]);
   const [progressPages, setProgressPagesMap] = useState<Record<string, number>>({});
+  const [pageInputs, setPageInputs] = useState<Record<string, string>>({});
 
   const history = useHistory();
 
@@ -90,9 +91,28 @@ export default function LibraryTab() {
     history.push(`/book/${id}`);
   };
 
+  const onSetPages = async (book: Book, pages: number) => {
+    const total = pageCountOf(book);
+    await setProgressPagesExact(book.id, pages, total > 0 ? total : undefined);
+    await load();
+    // Limpiar el input después de actualizar
+    setPageInputs(prev => ({ ...prev, [book.id]: "" }));
+  };
+
   const onIncPages = async (book: Book, deltaPages: number) => {
     const total = pageCountOf(book);
-    await updateProgressPages(book.id, deltaPages, total > 0 ? total : undefined);
+    const current = pagesReadFor(book.id);
+    const newPages = current + deltaPages;
+    
+    // Validar límites
+    if (total > 0 && newPages > total) {
+      await setProgressPagesExact(book.id, total, total);
+    } else if (newPages < 0) {
+      await setProgressPagesExact(book.id, 0, total > 0 ? total : undefined);
+    } else {
+      await setProgressPagesExact(book.id, newPages, total > 0 ? total : undefined);
+    }
+    
     await load();
   };
 
@@ -114,6 +134,15 @@ export default function LibraryTab() {
   const onRemoveDone = async (id: string) => {
     await removeFromFinished(id);
     await load();
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent, book: Book) => {
+    if (e.key === 'Enter') {
+      const value = parseInt(pageInputs[book.id] || "0");
+      if (!isNaN(value)) {
+        onSetPages(book, value);
+      }
+    }
   };
 
   return (
@@ -150,7 +179,7 @@ export default function LibraryTab() {
                   <div key={b.id} style={{ marginTop: 10 }}>
                     <BookRow book={b} onClick={() => onOpen(b.id)} right={rightBadge} />
 
-                    {/* Texto: Página X de Y */}
+                    {/* Texto: Página X de Y con porcentaje */}
                     <div
                       style={{
                         marginTop: 8,
@@ -187,17 +216,132 @@ export default function LibraryTab() {
                       </div>
                     )}
 
-                    {/* Botones: ahora son páginas */}
-                    <div className="lib-actions">
-                      <IonButton className="app-secondary-button" onClick={() => onIncPages(b, 10)}>
-                        +10 págs
-                      </IonButton>
-                      <IonButton className="app-secondary-button" onClick={() => onIncPages(b, -10)}>
-                        -10 págs
+                    {/* 🔧 Caja para escribir número con botones +/- */}
+                    <div className="lib-actions" style={{ marginTop: 12 }}>
+                      <div style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: 8,
+                        width: "100%",
+                        justifyContent: "center"
+                      }}>
+                        {/* Botón - */}
+                        <button
+                          onClick={() => onIncPages(b, -1)}
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 8,
+                            border: "2px solid var(--ion-color-primary)",
+                            background: "white",
+                            fontSize: 24,
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--ion-color-primary)",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "var(--ion-color-primary)";
+                            e.currentTarget.style.color = "white";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "white";
+                            e.currentTarget.style.color = "var(--ion-color-primary)";
+                          }}
+                        >
+                          -
+                        </button>
+                        
+                        {/* Caja de texto para número */}
+                        <div style={{ position: "relative", width: 120 }}>
+                          <input
+                            type="number"
+                            min="0"
+                            max={totalPages > 0 ? totalPages : undefined}
+                            value={pageInputs[b.id] || ""}
+                            onChange={(e) => setPageInputs(prev => ({ ...prev, [b.id]: e.target.value }))}
+                            onKeyPress={(e) => handlePageInputKeyPress(e, b)}
+                            placeholder={`${readPages}`}
+                            style={{
+                              width: "100%",
+                              padding: "12px 12px",
+                              paddingRight: 40,
+                              borderRadius: 8,
+                              border: "2px solid var(--ion-color-primary)",
+                              fontSize: 18,
+                              fontWeight: 600,
+                              textAlign: "center",
+                              background: "white",
+                              color: "var(--text-primary)",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                          <span style={{
+                            position: "absolute",
+                            right: 12,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                            fontWeight: 500,
+                            pointerEvents: "none"
+                          }}>
+                            págs
+                          </span>
+                        </div>
+                        
+                        {/* Botón + */}
+                        <button
+                          onClick={() => onIncPages(b, 1)}
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 8,
+                            border: "2px solid var(--ion-color-primary)",
+                            background: "white",
+                            fontSize: 24,
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--ion-color-primary)",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "var(--ion-color-primary)";
+                            e.currentTarget.style.color = "white";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "white";
+                            e.currentTarget.style.color = "var(--ion-color-primary)";
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                      
+                      {/* Botón para aplicar el número escrito (Enter o click) */}
+                      <IonButton 
+                        className="app-primary-button"
+                        style={{ marginTop: 12, width: "100%" }}
+                        onClick={() => {
+                          const value = parseInt(pageInputs[b.id] || "0");
+                          if (!isNaN(value)) {
+                            onSetPages(b, value);
+                          }
+                        }}
+                        disabled={!pageInputs[b.id] || isNaN(parseInt(pageInputs[b.id]))}
+                      >
+                        Ir a esta página
                       </IonButton>
                     </div>
 
-                    <div className="lib-actions" style={{ marginTop: 10 }}>
+                    {/* Botones Terminar y Quitar */}
+                    <div className="lib-actions" style={{ marginTop: 12 }}>
                       <IonButton className="app-secondary-button" onClick={() => onFinish(b)}>
                         Terminar
                       </IonButton>
