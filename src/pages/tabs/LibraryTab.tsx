@@ -332,7 +332,8 @@ export default function LibraryTab() {
                         }}
                         disabled={!pageInputs[b.id] || isNaN(parseInt(pageInputs[b.id]))}
                       >
-                        Ir a esta página
+                        Guardar progreso
+
                       </IonButton>
                     </div>
 
