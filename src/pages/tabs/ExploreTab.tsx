@@ -1,4 +1,4 @@
-// src/pages/tabs/ExploreTab.tsx
+
 import { IonButton } from "@ionic/react";
 import { useMemo, useState } from "react";
 import { useHistory } from "react-router";
@@ -47,8 +47,7 @@ function matchesGenre(book: Book, genre: string) {
   const cats = normalizeList(book.categories);
   const g = genre.toLowerCase();
 
-  // match flexible (ej: "ciencia ficción" puede venir como "science fiction")
-  // Si luego quieres, aquí hacemos un mapa ES->EN.
+
   return cats.some((c) => c.includes(g));
 }
 
@@ -72,7 +71,7 @@ export default function ExploreTab() {
     const trimmed = q.trim();
     const queryToUse = trimmed || (activeGenre !== "Todos" ? activeGenre : "");
 
-    // si no hay nada que buscar, mostramos el estado inicial (sin resultados)
+ 
     if (!queryToUse) {
       setHasSearched(false);
       setRawResults([]);
@@ -83,10 +82,9 @@ export default function ExploreTab() {
     setLoading(true);
 
     try {
-      // Nota: esto hace búsqueda por texto (título/autor) usando tu servicio actual
       const res = await searchBooksWithFilters(q, {
         maxResults: 40,
-        genre: activeGenre, // "Todos" o un género real
+        genre: activeGenre, 
       });
       setRawResults(res);
     } finally {
@@ -149,8 +147,6 @@ export default function ExploreTab() {
                   className={`explore-chip ${active ? "is-active" : ""}`}
                   onClick={() => {
                     setActiveGenre(g);
-                    // si ya buscó, aplicamos filtro al vuelo (sin volver a pegarle a OpenLibrary)
-                    // si NO ha buscado, no hacemos nada todavía (solo deja elegido el filtro)
                   }}
                 >
                   {g}

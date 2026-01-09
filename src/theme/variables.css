@@ -1,5 +1,5 @@
 :root {
-  /* ---------- Brand / UI colors (se quedan) ---------- */
+  /* ---------- Brand / UI colors  ---------- */
   --orange-primary: #FF6B35;
   --orange-secondary: #FF9E1F;
   --orange-light: #FFB347;
@@ -9,12 +9,10 @@
   --border-color: #E2E8F0;
   --success-color: #38A169;
 
-  /* ---------- NEW: Tipografía global (como Inicio) ---------- */
   --app-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 
-  /* ---------- NEW: Texto en negro (como pediste) ---------- */
-  --text-primary: #111111;     /* negro */
-  --text-secondary: #333333;   /* gris oscuro */
+  --text-primary: #111111;    
+  --text-secondary: #333333;  
 
   /* ---------- Ionic Theme ---------- */
   --ion-color-primary: #FF6B35;
@@ -26,12 +24,10 @@
 
   --ion-background-color: #FFF9F5;
 
-  /* ✅ Importante: fuerza texto negro en Ionic */
   --ion-text-color: #111111;
   --ion-text-color-rgb: 17,17,17;
 }
 
-/* ---------- Paleta crema (la dejamos, pero NO usamos cream-text para texto general) ---------- */
 :root {
   --cream-bg-1: #f5e6d3;
   --cream-bg-2: #fdf5e6;
@@ -42,7 +38,13 @@
   --cream-text: #fef9f3; /* solo úsalo en botones o header si quieres */
 }
 
-/* ---------- NEW: Aplicar tipografía a toda la app ---------- */
 html, body, ion-app, ion-content, ion-title, ion-label, ion-button, ion-card, ion-text {
   font-family: var(--app-font) !important;
+}
+
+.app-container-wide {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
 }
