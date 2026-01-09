@@ -93,14 +93,14 @@ export default function LibraryTab() {
     const total = pageCountOf(book);
     await setProgressPagesExact(book.id, pages, total > 0 ? total : undefined);
     await load();
-    setPageInputs(prev => ({ ...prev, [book.id]: "" }));
+    setPageInputs((prev) => ({ ...prev, [book.id]: "" }));
   };
 
   const onIncPages = async (book: Book, deltaPages: number) => {
     const total = pageCountOf(book);
     const current = pagesReadFor(book.id);
     const newPages = current + deltaPages;
-    
+
     if (total > 0 && newPages > total) {
       await setProgressPagesExact(book.id, total, total);
     } else if (newPages < 0) {
@@ -108,7 +108,7 @@ export default function LibraryTab() {
     } else {
       await setProgressPagesExact(book.id, newPages, total > 0 ? total : undefined);
     }
-    
+
     await load();
   };
 
@@ -133,7 +133,7 @@ export default function LibraryTab() {
   };
 
   const handlePageInputKeyPress = (e: React.KeyboardEvent, book: Book) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       const value = parseInt(pageInputs[book.id] || "0");
       if (!isNaN(value)) {
         onSetPages(book, value);
@@ -142,7 +142,7 @@ export default function LibraryTab() {
   };
 
   return (
-    <PageShell title="Mi lectura">
+    <PageShell title="Mi lectura" wide>
       <div className="app-section">
         <div className="app-card" style={{ padding: 16 }}>
           <div className="lib-section-title">Leyendo</div>
@@ -175,7 +175,6 @@ export default function LibraryTab() {
                   <div key={b.id} style={{ marginTop: 10 }}>
                     <BookRow book={b} onClick={() => onOpen(b.id)} right={rightBadge} />
 
-                    {/* Texto: Página X de Y con porcentaje */}
                     <div
                       style={{
                         marginTop: 8,
@@ -184,11 +183,12 @@ export default function LibraryTab() {
                         color: "var(--text-secondary)",
                       }}
                     >
-                      {totalPages > 0 ? `Página ${readPages} de ${totalPages}` : `Páginas leídas: ${readPages}`}
+                      {totalPages > 0
+                        ? `Página ${readPages} de ${totalPages}`
+                        : `Páginas leídas: ${readPages}`}
                       {totalPages > 0 ? ` (${pct}%)` : ""}
                     </div>
 
-                    {/* Barra de progreso */}
                     {totalPages > 0 && (
                       <div
                         style={{
@@ -212,16 +212,17 @@ export default function LibraryTab() {
                       </div>
                     )}
 
-                    {/*  Caja para escribir número con botones +/- */}
-                    <div className="lib-actions" style={{ marginTop: 12 }}>
-                      <div style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        gap: 8,
-                        width: "100%",
-                        justifyContent: "center"
-                      }}>
-                        {/* Botón - */}
+                    <div className="lib-actions" style={{ marginTop: 12, flexDirection: "column" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          width: "100%",
+                          justifyContent: "flex-start",
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <button
                           onClick={() => onIncPages(b, -1)}
                           style={{
@@ -237,7 +238,7 @@ export default function LibraryTab() {
                             alignItems: "center",
                             justifyContent: "center",
                             color: "var(--ion-color-primary)",
-                            transition: "all 0.2s"
+                            transition: "all 0.2s",
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = "var(--ion-color-primary)";
@@ -250,15 +251,16 @@ export default function LibraryTab() {
                         >
                           -
                         </button>
-                        
-                        {/* Caja de texto para número */}
+
                         <div style={{ position: "relative", width: 120 }}>
                           <input
                             type="number"
                             min="0"
                             max={totalPages > 0 ? totalPages : undefined}
                             value={pageInputs[b.id] || ""}
-                            onChange={(e) => setPageInputs(prev => ({ ...prev, [b.id]: e.target.value }))}
+                            onChange={(e) =>
+                              setPageInputs((prev) => ({ ...prev, [b.id]: e.target.value }))
+                            }
                             onKeyPress={(e) => handlePageInputKeyPress(e, b)}
                             placeholder={`${readPages}`}
                             style={{
@@ -272,24 +274,25 @@ export default function LibraryTab() {
                               textAlign: "center",
                               background: "white",
                               color: "var(--text-primary)",
-                              boxSizing: "border-box"
+                              boxSizing: "border-box",
                             }}
                           />
-                          <span style={{
-                            position: "absolute",
-                            right: 12,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            fontSize: 12,
-                            color: "var(--text-secondary)",
-                            fontWeight: 500,
-                            pointerEvents: "none"
-                          }}>
+                          <span
+                            style={{
+                              position: "absolute",
+                              right: 12,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              fontSize: 12,
+                              color: "var(--text-secondary)",
+                              fontWeight: 500,
+                              pointerEvents: "none",
+                            }}
+                          >
                             págs
                           </span>
                         </div>
-                        
-                        {/* Botón + */}
+
                         <button
                           onClick={() => onIncPages(b, 1)}
                           style={{
@@ -305,7 +308,7 @@ export default function LibraryTab() {
                             alignItems: "center",
                             justifyContent: "center",
                             color: "var(--ion-color-primary)",
-                            transition: "all 0.2s"
+                            transition: "all 0.2s",
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = "var(--ion-color-primary)";
@@ -319,9 +322,8 @@ export default function LibraryTab() {
                           +
                         </button>
                       </div>
-                      
-                      {/* Botón para aplicar el número escrito (Enter o click) */}
-                      <IonButton 
+
+                      <IonButton
                         className="app-primary-button"
                         style={{ marginTop: 12, width: "100%" }}
                         onClick={() => {
@@ -333,11 +335,9 @@ export default function LibraryTab() {
                         disabled={!pageInputs[b.id] || isNaN(parseInt(pageInputs[b.id]))}
                       >
                         Guardar progreso
-
                       </IonButton>
                     </div>
 
-                    {/* Botones Terminar y Quitar */}
                     <div className="lib-actions" style={{ marginTop: 12 }}>
                       <IonButton className="app-secondary-button" onClick={() => onFinish(b)}>
                         Terminar

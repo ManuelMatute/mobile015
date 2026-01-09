@@ -107,3 +107,53 @@
 .lib-x:active {
   transform: scale(0.98);
 }
+
+.lib-list {
+  gap: 18px;
+}
+
+.lib-list > div {
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.lib-list > div:last-child {
+  border-bottom: none;
+}
+
+.lib-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.lib-actions ion-button {
+  flex: 1 1 160px;
+  min-width: 160px;
+}
+
+.lib-actions ion-button::part(native) {
+  width: 100%;
+}
+
+.lib-actions button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 520px) {
+  .lib-actions {
+    gap: 10px;
+  }
+
+  .lib-actions ion-button {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
+
+
+.app-card {
+  max-width: none;
+  width: 100%;
+}

@@ -41,3 +41,10 @@
 html, body, ion-app, ion-content, ion-title, ion-label, ion-button, ion-card, ion-text {
   font-family: var(--app-font) !important;
 }
+
+.app-container-wide {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
