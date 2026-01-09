@@ -1,4 +1,3 @@
-// src/pages/tabs/LibraryTab.tsx
 import { IonButton } from "@ionic/react";
 import { useIonViewWillEnter } from "@ionic/react";
 import { useMemo, useState } from "react";
@@ -67,7 +66,6 @@ export default function LibraryTab() {
   const load = async () => {
     const [n, t, d] = await Promise.all([getReadingNow(), getToRead(), getFinished()]);
 
-    // ✅ migración 1 sola vez si aún no existe progress_pages
     const allBooks = [...n, ...t, ...d];
     await ensureProgressPagesFromLegacy(allBooks);
 
@@ -95,7 +93,6 @@ export default function LibraryTab() {
     const total = pageCountOf(book);
     await setProgressPagesExact(book.id, pages, total > 0 ? total : undefined);
     await load();
-    // Limpiar el input después de actualizar
     setPageInputs(prev => ({ ...prev, [book.id]: "" }));
   };
 
@@ -104,7 +101,6 @@ export default function LibraryTab() {
     const current = pagesReadFor(book.id);
     const newPages = current + deltaPages;
     
-    // Validar límites
     if (total > 0 && newPages > total) {
       await setProgressPagesExact(book.id, total, total);
     } else if (newPages < 0) {
@@ -216,7 +212,7 @@ export default function LibraryTab() {
                       </div>
                     )}
 
-                    {/* 🔧 Caja para escribir número con botones +/- */}
+                    {/*  Caja para escribir número con botones +/- */}
                     <div className="lib-actions" style={{ marginTop: 12 }}>
                       <div style={{ 
                         display: "flex", 

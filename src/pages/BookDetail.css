@@ -1,17 +1,13 @@
-/* src/pages/BookDetail.css */
 
 .bookdetail-page {
-  /* Tipografía igual que Inicio (system font) */
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 
-  /* Fondo crema */
   --bd-bg: linear-gradient(135deg, #f5e6d3 0%, #fdf5e6 100%);
   --bd-content: #fefdfb;
 
   --bd-header: linear-gradient(135deg, #d97639 0%, #e8965e 100%);
   --bd-header-border: #c26433;
 
-  /* ✅ TEXTO NEGRO + sin sombra */
   --bd-title: #111111;
   --bd-title-shadow: none;
 
@@ -27,7 +23,6 @@
   background: var(--bd-bg);
 }
 
-/* el IonContent tiene su propio fondo; lo reforzamos */
 .bookdetail-page ion-content {
   --background: transparent;
 }
@@ -149,7 +144,6 @@
 }
 
 .bookdetail-genresCount {
-  /* ✅ ahora negro igual que el texto */
   color: var(--bd-text);
   font-weight: 800;
   font-size: 12px;
@@ -164,7 +158,6 @@
 
 .bookdetail-genreTag {
   background: var(--bd-tag);
-  /* ✅ como --bd-title ahora es negro, los tags quedan con texto negro */
   color: var(--bd-title);
   padding: 8px 16px;
   border-radius: 20px;
@@ -190,7 +183,6 @@
   border-top: 1px solid var(--bd-actions-border);
 }
 
-/* Botones tipo Claude */
 .btn {
   padding: 14px 28px;
   border: none;
@@ -204,7 +196,6 @@
   align-items: center;
   gap: 8px;
 
-  /* ✅ dejo texto blanco en botones (mejor contraste) */
   color: #fef9f3;
 }
 
@@ -240,7 +231,6 @@
   background: linear-gradient(135deg, #e8a87c 0%, #d9916a 100%);
 }
 
-/* íconos con pseudo */
 .btn-icon::before {
   display: inline-block;
   width: 20px;

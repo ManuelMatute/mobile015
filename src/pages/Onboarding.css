@@ -1,4 +1,3 @@
-/* Variables de colores naranja */
 :root {
   --orange-primary: #FF6B35;
   --orange-secondary: #FF9E1F;
@@ -180,7 +179,6 @@
   font-size: 0.95rem;
 }
 
-/* Metas diarias */
 .goals-container {
   display: grid;
   gap: 1rem;

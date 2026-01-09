@@ -1,4 +1,3 @@
-// src/pages/BookDetail.tsx
 import {
   IonButton,
   IonContent,
@@ -31,7 +30,6 @@ function uniqStrings(list: (string | undefined | null)[]) {
   return Array.from(new Set(clean));
 }
 
-// Merge explícito por campo (base manda si tiene algo, si no se rellena con incoming)
 function mergeBooks(base: Book, incoming: Book): Book {
   const mergedCategories = uniqStrings([
     ...(base.categories ?? []),
@@ -82,13 +80,11 @@ export default function BookDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation<LocationState>();
 
-  // 1) book inicial viene del Home/Explore (si existe)
   const initialBook = location.state?.book ?? null;
 
   const [book, setBook] = useState<Book | null>(initialBook);
   const [prefs, setPrefs] = useState<UserPrefs | null>(null);
 
-  // Si ya tenemos initialBook, NO nos quedamos pegados en "Cargando..."
   const [loading, setLoading] = useState(!initialBook);
   const [error, setError] = useState("");
 
@@ -108,7 +104,7 @@ export default function BookDetail() {
 
       try {
         const [bWork, p] = await Promise.all([
-          getBookById(id), // Work API (enriquece)
+          getBookById(id), // Work API 
           getJSON<UserPrefs | null>(PREFS_KEY, null),
         ]);
 
@@ -144,7 +140,6 @@ export default function BookDetail() {
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const cats = useMemo(
@@ -277,8 +272,7 @@ export default function BookDetail() {
 
   return (
     <IonPage className="app-page bookdetail-page">
-      {/* ✅ mantenemos IonHeader pero ponemos el título bonito dentro del contenido
-          (si quieres, luego quitamos IonHeader totalmente) */}
+      {/*  Mantenemos IonHeader pero ponemos el título bonito dentro del contenido */}
       <IonHeader className="app-header">
         <IonToolbar>
           <IonTitle>Libro</IonTitle>

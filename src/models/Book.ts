@@ -1,4 +1,3 @@
-// src/models/Book.ts
 export type BookLanguage = "es" | "en";
 
 export type Book = {
@@ -7,7 +6,7 @@ export type Book = {
   authors?: string[];
   description?: string;
   pageCount?: number;
-  language?: BookLanguage;      // <- tipado
+  language?: BookLanguage;      
   categories?: string[];
   thumbnail?: string;
   previewLink?: string;

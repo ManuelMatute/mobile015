@@ -1,4 +1,3 @@
-// HomeTab.tsx
 import {
   IonButton,
   IonContent,
@@ -30,15 +29,15 @@ const REC_REFRESH_KEY = "home_rec_refresh_v1";
 const MAX_REFRESHES_PER_DAY = 3;
 
 type RefreshState = {
-  date: string; // YYYY-MM-DD
-  used: number; // 0..MAX
-  prefsSig: string; // ✅ NUEVO: para resetear si cambia onboarding/prefs
+  date: string; 
+  used: number; 
+  prefsSig: string; 
 };
 
-// ✅ cache de recomendaciones para que NO cambien al volver del detalle/tab
+// cache de recomendaciones
 const RECS_CACHE_KEY = "home_recs_cache_v1";
 type RecsCache = {
-  date: string; // YYYY-MM-DD
+  date: string; 
   prefsSig: string;
   books: Book[];
 };
@@ -70,7 +69,7 @@ export default function HomeTab() {
   const [recMsg, setRecMsg] = useState("");
 
   const [readingNow, setReadingNow] = useState<Book[]>([]);
-  // ✅ pages map
+  
   const [pagesMap, setPagesMap] = useState<Record<string, number>>({});
 
   const [refreshUsed, setRefreshUsed] = useState(0);
@@ -92,16 +91,12 @@ export default function HomeTab() {
 
     const st = await getJSON<RefreshState | null>(REC_REFRESH_KEY, null);
 
-    // ✅ Resetea si:
-    // 1) no existe
-    // 2) cambió el día
-    // 3) cambió la firma de prefs (reinicio onboarding / cambios)
+  
     if (!st || st.date !== t || st.prefsSig !== sig) {
       const next: RefreshState = { date: t, used: 0, prefsSig: sig };
       await setJSON(REC_REFRESH_KEY, next);
       setRefreshUsed(0);
 
-      // si cambian prefs, limpia cache para que cargue acorde a lo nuevo
       if (!st || st.prefsSig !== sig) {
         await setJSON(RECS_CACHE_KEY, null);
       }
@@ -115,10 +110,8 @@ export default function HomeTab() {
     const s = await getStreak();
     setStreak(s.streakCount);
 
-    // ✅ reading now + pages
     const nowList = await getReadingNow();
 
-    // ✅ migrar legacy % -> pages si hiciera falta (solo una vez)
     await ensureProgressPagesFromLegacy(nowList);
 
     const pMap = await getProgressPages();
@@ -134,10 +127,9 @@ export default function HomeTab() {
       const prefs = await getJSON<UserPrefs | null>(PREFS_KEY, null);
       const sig = prefsSignature(prefs);
 
-      // ✅ Asegura que el contador se resetee si cambió onboarding/prefs
       await ensureRefreshCounter(prefs);
 
-      // 1) Intentar usar cache (si coincide firma)
+
       const cache = await getJSON<RecsCache | null>(RECS_CACHE_KEY, null);
       if (
         cache &&
@@ -149,7 +141,6 @@ export default function HomeTab() {
         return;
       }
 
-      // 2) Fetch normal
       const rec = await getRecommendedBooksForUser(prefs, { maxResults: 6 });
       setBooks(rec);
 
@@ -184,7 +175,6 @@ export default function HomeTab() {
   const openExplore = () => history.push("/tabs/explore");
   const openLibrary = () => history.push("/tabs/library");
 
-  // ✅ completado si pagesRead >= pageCount (si pageCount existe)
   const completedCount = useMemo(() => {
     return readingNow.filter((b) => {
       const total = pageCountOf(b);
@@ -211,12 +201,10 @@ export default function HomeTab() {
       const sig = prefsSignature(prefs);
       const t = todayKey();
 
-      // ✅ incrementa contador y persiste con prefsSig
       const nextUsed = Math.min(MAX_REFRESHES_PER_DAY, refreshUsed + 1);
       setRefreshUsed(nextUsed);
       await setJSON(REC_REFRESH_KEY, { date: t, used: nextUsed, prefsSig: sig });
 
-      // ✅ forzar nuevas recomendaciones: borrar cache antes de pedir
       await setJSON(RECS_CACHE_KEY, null);
 
       const rec = await getRecommendedBooksForUser(prefs, { maxResults: 6 });
@@ -261,7 +249,7 @@ export default function HomeTab() {
 
           <div className="app-divider" />
 
-          {/* ✅ WIDGET ¿Leíste hoy? */}
+          {/*  WIDGET ¿Leíste hoy? */}
           <div className="app-section">
             <div className="app-card" style={{ padding: 16 }}>
               <div style={{ flex: 1 }}>
@@ -451,7 +439,7 @@ export default function HomeTab() {
             </div>
           </div>
 
-          {/* ✅ Recomendaciones + botón Actualizar */}
+          {/* Recomendaciones + botón Actualizar */}
           <div className="app-section">
             <div
               style={{
